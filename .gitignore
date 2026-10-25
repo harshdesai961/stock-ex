@@ -1,0 +1,25 @@
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.turbo/
+playwright-report/
+test-results/
+*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Personal editor / tool settings
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+
+# Third-party reference material: read locally, never pushed
+docs/rules/*.pdf
+docs/reference/
+docs/ui-reference/

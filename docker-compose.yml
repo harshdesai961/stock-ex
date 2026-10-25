@@ -1,0 +1,49 @@
+# Local development services for stock-ex.
+# Apps (web, server, worker) run on your machine with `pnpm dev`;
+# only the databases run in Docker.
+name: stock-ex
+
+services:
+  postgres:
+    image: postgres:18-alpine          # pin the major version; bump deliberately
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:5432:5432"          # reachable only from your own machine
+    volumes:
+      - pgdata:/var/lib/postgresql     # Postgres 18+ image mounts here (not .../data)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"                          # keep data across restarts
+      - --maxmemory-policy
+      - noeviction                     # required by BullMQ
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
