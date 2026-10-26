@@ -3,3 +3,7 @@ packages:
   - packages/*
 allowBuilds:
   esbuild: true
+# Security overrides: remove each one when the parent package ships the fix (docs/DECISIONS.md ADR-0010).
+overrides:
+  # GHSA-q7qp-rjg7-q26m (high). @nestjs/platform-express 12.2.0 pins multer 2.4.0.
+  multer: 2.5.0

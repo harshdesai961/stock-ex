@@ -75,6 +75,12 @@ Chosen for later milestones (installed when first used): socket.io 4.8.4, @socke
 
 - `eslint-plugin-security`'s `detect-object-injection` / `detect-non-literal-fs-filename` / `detect-non-literal-regexp` are disabled **only** for `scripts/**` and `packages/db/scripts/**` (local setup tools reading our own files). Elsewhere they stay on with `--max-warnings 0`, and any inline disable must carry a `-- reason`.
 
+## ADR-0010: Security overrides for pinned transitive dependencies
+
+- **Context:** CI's `pnpm audit --audit-level high` failed on `multer` 2.4.0 (GHSA-q7qp-rjg7-q26m, DoS), which `@nestjs/platform-express` 12.2.0 (latest) pins exactly.
+- **Decision:** Force the patched `multer` 2.5.0 (same major) with `overrides` in `pnpm-workspace.yaml`. Each override has a comment naming the advisory and is removed as soon as the parent package ships the fix.
+- **Accepted:** a *moderate* esbuild advisory (dev server CORS) inside `drizzle-kit`'s dev-only loader. It never runs in production and is below the CI threshold; revisit on the next drizzle-kit release.
+
 ## Dependencies added in M0
 
 | Package | Licence | Why we need it |
