@@ -2,7 +2,7 @@
 
 This guide takes any developer from a fresh laptop to a running copy of stock-ex, and describes how the team works together day to day. Keep it accurate: whoever changes a command, port or environment variable updates this file in the same pull request.
 
-> **Before Milestone 0 is merged**, only sections 1–3 and the Git/Docker parts of section 4 work. The `pnpm` commands in sections 4–6 are created by the M0 scaffold.
+> The `pnpm` commands in sections 4–6 exist from Milestone 0 onwards. On an older checkout, only sections 1–3 and the Git/Docker parts of section 4 work.
 
 ---
 
@@ -28,7 +28,7 @@ Apps run directly on your machine for fast hot reload; only the databases run in
 | Git | `winget install --id Git.Git` | `brew install git` / distro package | `git --version` |
 | GitHub CLI | `winget install --id GitHub.cli` | `brew install gh` | `gh --version` |
 | fnm (Node version manager) | `winget install --id Schniz.fnm` | `brew install fnm` | `fnm --version` |
-| Node.js 26 LTS (version in `.nvmrc`) | `fnm install 26` then `fnm default 26` | same | `node -v` shows v26 |
+| Node.js 24 LTS (version in `.nvmrc`) | `fnm install 24` then `fnm default 24` | same | `node -v` shows v24 |
 | pnpm 12 | `npm install -g pnpm@12` | same | `pnpm -v` shows 12 |
 | Docker Desktop | docker.com download (enable WSL 2) | docker.com download / Docker Engine | `docker compose version` |
 | gitleaks (pre-commit secret scan) | `winget install --id Gitleaks.Gitleaks` | `brew install gitleaks` | `gitleaks version` |
@@ -100,13 +100,17 @@ docs/ui-reference/*.png          (6 screenshots)
 
 ### 4.3 Environment file
 
-The **root `.env`** is the only environment file you edit. All apps read it.
+The **root `.env`** is the only environment file you edit. All apps read it and validate it with Zod at start-up; a missing or weak value stops the app with a message naming the variable.
+
+**Easiest:** let `pnpm bootstrap` (section 4.4) create it: it copies `.env.example` and fills every `CHANGE-ME` with fresh random values, keeping the connection strings consistent with the passwords. When a teammate adds a variable, running `pnpm bootstrap` again appends just the missing keys (a backup `.env.backup-*` is written first; values are never printed).
+
+By hand, if you prefer:
 
 ```powershell
 Copy-Item .env.example .env        # macOS/Linux: cp .env.example .env
 ```
 
-Then replace every `CHANGE-ME` value. Generate each secret with:
+Then replace every `CHANGE-ME` value, keeping the passwords inside `DATABASE_URL`, `DATABASE_MIGRATION_URL` and `REDIS_URL` in sync with `APP_DB_PASSWORD`, `POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Generate each secret with:
 
 ```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
@@ -124,7 +128,9 @@ Rules:
 pnpm bootstrap
 ```
 
-`pnpm bootstrap` checks your Node/pnpm versions and Docker, creates `.env` if missing, starts Postgres and Redis, waits until they're healthy, installs dependencies, runs migrations and seeds sample data. It's safe to run again at any time.
+`pnpm bootstrap` checks your Node/pnpm versions and Docker, creates or upgrades `.env`, starts Postgres and Redis, waits until they're healthy, installs dependencies, builds the shared packages, creates the least-privilege database role the apps use (`APP_DB_USER`), runs migrations and seeds sample data. It's safe to run again at any time.
+
+The database has two roles: the apps connect with `DATABASE_URL` as the **app role** (read/write rows only), while migrations and Drizzle Studio use `DATABASE_MIGRATION_URL` as the **owner role**. If your `.env` predates M0, bootstrap switches `DATABASE_URL` to the app role for you.
 
 Before M0, do the Docker part by hand:
 
@@ -232,8 +238,9 @@ Push your branch even if it isn't finished. Open it as a **draft PR** (`gh pr cr
 | `pnpm lint` / `pnpm lint:fix` | Lint / lint and auto-fix |
 | `pnpm format` | Prettier on the whole repo |
 | `pnpm typecheck` | TypeScript checks in all packages |
-| `pnpm test` / `pnpm test:watch` | Unit and integration tests |
-| `pnpm test:e2e` | Playwright end-to-end tests (needs `pnpm dev` running or starts it) |
+| `pnpm test` / `pnpm test:watch` | Unit tests in every package |
+| `pnpm --filter @stock-ex/server test:integration` | Server tests against your running Postgres and Redis |
+| `pnpm test:e2e` | Playwright end-to-end + axe accessibility tests (reuses `pnpm dev` if running, otherwise builds and starts the web app). First time: `pnpm --filter @stock-ex/web exec playwright install chromium` |
 | `pnpm db:generate` | Create a migration from schema changes |
 | `pnpm db:migrate` | Apply migrations to your local database |
 | `pnpm db:seed` | Load sample data |
@@ -344,8 +351,9 @@ Staging and production secrets live only in the hosting platforms and GitHub Act
 | `pnpm` / `npm` scripts blocked in PowerShell | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | `Filename too long` on Windows | `git config --global core.longpaths true`, then clone again. |
 | Wrong Node version / `Unsupported engine` | `fnm install; fnm use` in the repo root. |
-| App says an env variable is missing | Compare your `.env` with `.env.example`; a teammate probably added one. |
+| App says an env variable is missing | Run `pnpm bootstrap`: it appends variables a teammate added to `.env.example`. |
 | Database errors after pulling | `pnpm db:migrate`. Still broken locally: `pnpm db:reset`. |
+| Commit blocked: "gitleaks is not installed" | Install it (section 2). The hook fails closed on purpose: no scan, no commit. |
 | Commit blocked by gitleaks | You staged a secret. Unstage it, move it to `.env`. If it ever reached GitHub, rotate the secret immediately. |
 | Every line shows as changed | Line-ending problem: run `git add --renormalize .` and tell your teammate. |
 | Merge conflict in `pnpm-lock.yaml` | `git checkout --theirs pnpm-lock.yaml` (while merging `main`), then `pnpm install` and commit. |
