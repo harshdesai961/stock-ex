@@ -16,6 +16,7 @@ test-results/
 
 # Personal editor / tool settings
 .claude/settings.local.json
+.claude/worktrees/
 .DS_Store
 Thumbs.db
 

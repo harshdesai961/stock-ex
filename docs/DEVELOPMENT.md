@@ -34,6 +34,8 @@ Apps run directly on your machine for fast hot reload; only the databases run in
 | gitleaks (pre-commit secret scan) | `winget install --id Gitleaks.Gitleaks` | `brew install gitleaks` | `gitleaks version` |
 | VS Code | code.visualstudio.com | same | — |
 | Claude Code | `irm https://claude.ai/install.ps1 \| iex` | `curl -fsSL https://claude.ai/install.sh \| bash` | `claude --version` |
+| Claude Desktop app (Code tab) | Download from claude.com/download | same | Sign in, open the **Code** tab |
+| TypeScript language server (for the `typescript-lsp` plugin) | `npm install -g typescript-language-server typescript` | same | `typescript-language-server --version` |
 
 Notes:
 
@@ -277,6 +279,32 @@ Docker:
 - Never paste secrets into Claude. It is configured not to read `.env` files.
 - Type `/clear` between unrelated tasks.
 
+### 8.1 Desktop app or CLI
+
+Both run the same Claude Code and read the same settings, `CLAUDE.md` and project plugins, so each developer can use whichever they prefer.
+
+- **Desktop app:** open the **Code** tab, set **Environment** to **Local**, **Project folder** to the repo, and pick a **Permission mode** (Manual, Accept edits, Plan, Auto). Review changes in the diff view (comment on lines, then Ctrl+Enter). Use the integrated terminal (Ctrl+`) for your own commands. `.claude/launch.json` tells the built-in browser preview how to start the web app.
+- **CLI:** run `claude` in the repo root; Shift+Tab cycles modes.
+- **Check Node in the Desktop app:** the app may not load your PowerShell profile, so fnm's Node can be missing. In a new session ask Claude to run `node -v` and `pnpm -v`. If they fail, install Node from nodejs.org (the same major version as `.nvmrc`) and reinstall pnpm.
+- **Worktrees:** parallel Desktop sessions can use Git worktrees under `.claude/worktrees/`, which is git-ignored.
+
+### 8.2 Plugins
+
+Install only Anthropic-verified plugins unless the team agrees otherwise; every plugin adds context to each conversation and can run code on your machine.
+
+| Plugin (from `claude-plugins-official`) | Scope | When |
+|---|---|---|
+| `typescript-lsp` | Project (shared) | From M0 merge; needs the TypeScript language server from section 2 |
+| `security-guidance` | Project (shared) | From M0 merge |
+| `frontend-design` | Project (shared) | From M3 (UI work) |
+| `code-review` | Project (shared) | From M0 merge, for PR reviews |
+| `explanatory-output-style` | Personal | Any time; explains why code is built the way it is |
+| `commit-commands` | Personal | Any time |
+| `learning-output-style` | Personal, optional | Makes you write key parts yourself; good interview practice |
+| `context7` (community) | Personal, optional | Current library docs in context |
+
+Install with `/plugin install <name>@claude-plugins-official` (CLI) or the plugin browser (Desktop app). Project-scope plugins are recorded in `.claude/settings.json`; add or remove them only through a pull request.
+
 ---
 
 ## 9. Environments
@@ -301,7 +329,8 @@ Staging and production secrets live only in the hosting platforms and GitHub Act
 - [ ] `.env` created with your own secrets
 - [ ] `pnpm bootstrap` and `pnpm healthcheck` pass
 - [ ] `pnpm dev` runs; http://localhost:3000 opens
-- [ ] Claude Code logged in; read `CLAUDE.md` and `docs/PROJECT_SPEC.md`
+- [ ] Claude Code (Desktop app and/or CLI) logged in; `node -v` works inside a Claude session; shared plugins installed (section 8.2)
+- [ ] Read `CLAUDE.md` and `docs/PROJECT_SPEC.md`
 - [ ] First small PR (for example, fixing something unclear in this guide) opened, reviewed and merged
 
 ---
@@ -320,4 +349,5 @@ Staging and production secrets live only in the hosting platforms and GitHub Act
 | Commit blocked by gitleaks | You staged a secret. Unstage it, move it to `.env`. If it ever reached GitHub, rotate the secret immediately. |
 | Every line shows as changed | Line-ending problem: run `git add --renormalize .` and tell your teammate. |
 | Merge conflict in `pnpm-lock.yaml` | `git checkout --theirs pnpm-lock.yaml` (while merging `main`), then `pnpm install` and commit. |
+| Claude Desktop app can't find `node` or `pnpm` | Install Node from nodejs.org (same major as `.nvmrc`), then `npm install -g pnpm@12`; restart the app. |
 | Something else | `pnpm healthcheck`, then ask your teammate with the exact error message. |

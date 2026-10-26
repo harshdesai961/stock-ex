@@ -348,7 +348,7 @@ Take inspiration from `docs/ui-reference/` (Richup.io landing and lobby, Colonis
   - `pnpm db:reset` refuses to run unless `DATABASE_URL` points at localhost.
 - **Cross-platform:** every script works on Windows PowerShell, macOS and Linux (Node scripts, not bash-only scripts).
 - **Shared editor settings:** `.vscode/extensions.json` (recommended extensions), `.vscode/settings.json` (format on save, ESLint fix on save, workspace TypeScript), `.editorconfig`.
-- **Claude Code:** commit `.claude/settings.json` (shared permissions and `.env` deny rules); `.claude/settings.local.json` is git-ignored for personal settings.
+- **Claude Code (CLI and Desktop app):** commit `.claude/settings.json` (shared permissions and `.env` deny rules) and `.claude/launch.json` (starts the web app on port 3000 for the Desktop app's browser preview). `.claude/settings.local.json` and `.claude/worktrees/` are git-ignored. Team plugins (`typescript-lsp`, `security-guidance`, `code-review`, later `frontend-design`) are installed by the developers at project scope; don't add or remove plugins yourself. Every command and script must work when Claude runs it from the Desktop app, which may not load the user's shell profile.
 
 ---
 
