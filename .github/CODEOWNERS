@@ -1,0 +1,6 @@
+# Every pull request needs a review from the other developer (spec section 11).
+# TODO(M0 review): add the second developer's GitHub username next to each rule.
+*                       @harshdesai961
+/packages/shared/       @harshdesai961
+/packages/db/migrations/ @harshdesai961
+/.github/               @harshdesai961
