@@ -24,3 +24,8 @@ Thumbs.db
 docs/rules/*.pdf
 docs/reference/
 docs/ui-reference/
+
+# Build and tool caches
+*.tsbuildinfo
+next-env.d.ts
+.env.backup-*
