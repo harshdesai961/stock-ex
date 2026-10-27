@@ -13,7 +13,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   await connection();
   return (
     <html lang="en">
-      <body className="min-h-screen bg-ink-950 text-ink-100 antialiased">{children}</body>
+      {/* Browser extensions (ColorZilla, Grammarly, password managers) add attributes to <body>
+          before React hydrates; ignore those. Mismatches inside {children} are still reported. */}
+      <body className="min-h-screen bg-ink-950 text-ink-100 antialiased" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }
