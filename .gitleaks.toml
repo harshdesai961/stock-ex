@@ -1,0 +1,15 @@
+# gitleaks configuration: the default rule set plus a narrow allowlist.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public test values that are safe to commit"
+# Cloudflare's documented always-pass Turnstile test keys, and CI-only throwaway values.
+regexes = [
+  '''1x0000000000000000000000000000000AA''',
+  '''1x00000000000000000000AA''',
+  '''ci-only-[a-z0-9-]+''',
+]
+paths = [
+  '''pnpm-lock\.yaml''',
+]

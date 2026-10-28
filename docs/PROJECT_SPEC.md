@@ -338,7 +338,7 @@ Take inspiration from `docs/ui-reference/` (Richup.io landing and lobby, Colonis
 `docs/DEVELOPMENT.md` is the team's setup and workflow guide. Read it before planning M0, implement everything it describes, and keep it accurate whenever commands, ports or env variables change.
 
 - **Naming:** product and repo are `stock-ex`. Workspace packages use the `@stock-ex/` scope: `@stock-ex/web`, `@stock-ex/server`, `@stock-ex/ai-worker`, `@stock-ex/engine`, `@stock-ex/shared`, `@stock-ex/db`, `@stock-ex/config`.
-- **Pinned toolchain:** Node.js 26 (Active LTS from 28 Oct 2026; the committed `.nvmrc` says `26`) and pnpm 12. Set `engines` in the root `package.json` (`node >=26 <27`), `packageManager` pinning the exact pnpm 12.x version, and `engine-strict=true` in `.npmrc`. Docker images: `postgres:18-alpine`, `redis:8-alpine`.
+- **Pinned toolchain:** Node.js 24 LTS (the committed `.nvmrc` says `24`; moving to 26 is tracked in docs/DECISIONS.md ADR-0002) and pnpm 12. Set `engines` in the root `package.json` (`node >=24 <25`), `packageManager` pinning the exact pnpm 12.x version, and `engine-strict=true` in `.npmrc`. Docker images: `postgres:18-alpine`, `redis:8-alpine`.
 - **One env file:** the root `.env` (copied from `.env.example`) is the only env file a developer edits. Every app loads it and validates it with Zod at start-up, failing with a clear message naming any missing or invalid variable.
 - **Zero-account local dev:** the app must run locally with no third-party accounts. Emails are printed to the server console in development; Google sign-in is hidden when its keys are empty; Turnstile uses Cloudflare's official test keys; Sentry is disabled without a DSN; AI features are off unless `FEATURE_AI=true`.
 - **Fixed local ports:** web 3000, server 4000, Postgres 5432, Redis 6379 (all bound to 127.0.0.1).
@@ -348,7 +348,7 @@ Take inspiration from `docs/ui-reference/` (Richup.io landing and lobby, Colonis
   - `pnpm db:reset` refuses to run unless `DATABASE_URL` points at localhost.
 - **Cross-platform:** every script works on Windows PowerShell, macOS and Linux (Node scripts, not bash-only scripts).
 - **Shared editor settings:** `.vscode/extensions.json` (recommended extensions), `.vscode/settings.json` (format on save, ESLint fix on save, workspace TypeScript), `.editorconfig`.
-- **Claude Code:** commit `.claude/settings.json` (shared permissions and `.env` deny rules); `.claude/settings.local.json` is git-ignored for personal settings.
+- **Claude Code (CLI and Desktop app):** commit `.claude/settings.json` (shared permissions and `.env` deny rules) and `.claude/launch.json` (starts the web app on port 3000 for the Desktop app's browser preview). `.claude/settings.local.json` and `.claude/worktrees/` are git-ignored. Team plugins (`typescript-lsp`, `security-guidance`, `code-review`, later `frontend-design`) are installed by the developers at project scope; don't add or remove plugins yourself. Every command and script must work when Claude runs it from the Desktop app, which may not load the user's shell profile.
 
 ---
 

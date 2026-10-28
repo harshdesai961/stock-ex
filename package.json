@@ -1,0 +1,43 @@
+{
+  "name": "stock-ex",
+  "private": true,
+  "type": "module",
+  "description": "Real-time multiplayer stock-market board game (play money only).",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=12.15.0 <13"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "healthcheck": "node scripts/healthcheck.mjs",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint && eslint --max-warnings 0 scripts \"*.js\"",
+    "lint:fix": "turbo run lint:fix && eslint --fix scripts \"*.js\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch --concurrency=20 --continue",
+    "test:e2e": "pnpm --filter @stock-ex/web test:e2e",
+    "db:generate": "pnpm --filter @stock-ex/db db:generate",
+    "db:migrate": "pnpm --filter @stock-ex/db db:migrate",
+    "db:seed": "pnpm --filter @stock-ex/db db:seed",
+    "db:studio": "pnpm --filter @stock-ex/db db:studio",
+    "db:reset": "node scripts/db-reset.mjs",
+    "sim": "pnpm --filter @stock-ex/engine sim",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@stock-ex/config": "workspace:*",
+    "@types/node": "24.19.2",
+    "eslint": "10.13.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.0",
+    "prettier": "3.9.10",
+    "turbo": "2.11.10",
+    "typescript": "6.0.3"
+  }
+}

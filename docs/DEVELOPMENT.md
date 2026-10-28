@@ -2,7 +2,7 @@
 
 This guide takes any developer from a fresh laptop to a running copy of stock-ex, and describes how the team works together day to day. Keep it accurate: whoever changes a command, port or environment variable updates this file in the same pull request.
 
-> **Before Milestone 0 is merged**, only sections 1–3 and the Git/Docker parts of section 4 work. The `pnpm` commands in sections 4–6 are created by the M0 scaffold.
+> The `pnpm` commands in sections 4–6 exist from Milestone 0 onwards. On an older checkout, only sections 1–3 and the Git/Docker parts of section 4 work.
 
 ---
 
@@ -28,12 +28,14 @@ Apps run directly on your machine for fast hot reload; only the databases run in
 | Git | `winget install --id Git.Git` | `brew install git` / distro package | `git --version` |
 | GitHub CLI | `winget install --id GitHub.cli` | `brew install gh` | `gh --version` |
 | fnm (Node version manager) | `winget install --id Schniz.fnm` | `brew install fnm` | `fnm --version` |
-| Node.js 26 LTS (version in `.nvmrc`) | `fnm install 26` then `fnm default 26` | same | `node -v` shows v26 |
+| Node.js 24 LTS (version in `.nvmrc`) | `fnm install 24` then `fnm default 24` | same | `node -v` shows v24 |
 | pnpm 12 | `npm install -g pnpm@12` | same | `pnpm -v` shows 12 |
 | Docker Desktop | docker.com download (enable WSL 2) | docker.com download / Docker Engine | `docker compose version` |
 | gitleaks (pre-commit secret scan) | `winget install --id Gitleaks.Gitleaks` | `brew install gitleaks` | `gitleaks version` |
 | VS Code | code.visualstudio.com | same | — |
 | Claude Code | `irm https://claude.ai/install.ps1 \| iex` | `curl -fsSL https://claude.ai/install.sh \| bash` | `claude --version` |
+| Claude Desktop app (Code tab) | Download from claude.com/download | same | Sign in, open the **Code** tab |
+| TypeScript language server (for the `typescript-lsp` plugin) | `npm install -g typescript-language-server typescript` | same | `typescript-language-server --version` |
 
 Notes:
 
@@ -98,13 +100,17 @@ docs/ui-reference/*.png          (6 screenshots)
 
 ### 4.3 Environment file
 
-The **root `.env`** is the only environment file you edit. All apps read it.
+The **root `.env`** is the only environment file you edit. All apps read it and validate it with Zod at start-up; a missing or weak value stops the app with a message naming the variable.
+
+**Easiest:** let `pnpm bootstrap` (section 4.4) create it: it copies `.env.example` and fills every `CHANGE-ME` with fresh random values, keeping the connection strings consistent with the passwords. When a teammate adds a variable, running `pnpm bootstrap` again appends just the missing keys (a backup `.env.backup-*` is written first; values are never printed).
+
+By hand, if you prefer:
 
 ```powershell
 Copy-Item .env.example .env        # macOS/Linux: cp .env.example .env
 ```
 
-Then replace every `CHANGE-ME` value. Generate each secret with:
+Then replace every `CHANGE-ME` value, keeping the passwords inside `DATABASE_URL`, `DATABASE_MIGRATION_URL` and `REDIS_URL` in sync with `APP_DB_PASSWORD`, `POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Generate each secret with:
 
 ```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
@@ -122,7 +128,9 @@ Rules:
 pnpm bootstrap
 ```
 
-`pnpm bootstrap` checks your Node/pnpm versions and Docker, creates `.env` if missing, starts Postgres and Redis, waits until they're healthy, installs dependencies, runs migrations and seeds sample data. It's safe to run again at any time.
+`pnpm bootstrap` checks your Node/pnpm versions and Docker, creates or upgrades `.env`, starts Postgres and Redis, waits until they're healthy, installs dependencies, builds the shared packages, creates the least-privilege database role the apps use (`APP_DB_USER`), runs migrations and seeds sample data. It's safe to run again at any time.
+
+The database has two roles: the apps connect with `DATABASE_URL` as the **app role** (read/write rows only), while migrations and Drizzle Studio use `DATABASE_MIGRATION_URL` as the **owner role**. If your `.env` predates M0, bootstrap switches `DATABASE_URL` to the app role for you.
 
 Before M0, do the Docker part by hand:
 
@@ -230,8 +238,9 @@ Push your branch even if it isn't finished. Open it as a **draft PR** (`gh pr cr
 | `pnpm lint` / `pnpm lint:fix` | Lint / lint and auto-fix |
 | `pnpm format` | Prettier on the whole repo |
 | `pnpm typecheck` | TypeScript checks in all packages |
-| `pnpm test` / `pnpm test:watch` | Unit and integration tests |
-| `pnpm test:e2e` | Playwright end-to-end tests (needs `pnpm dev` running or starts it) |
+| `pnpm test` / `pnpm test:watch` | Unit tests in every package |
+| `pnpm --filter @stock-ex/server test:integration` | Server tests against your running Postgres and Redis |
+| `pnpm test:e2e` | Playwright end-to-end + axe accessibility tests (reuses `pnpm dev` if running, otherwise builds and starts the web app). First time: `pnpm --filter @stock-ex/web exec playwright install chromium` |
 | `pnpm db:generate` | Create a migration from schema changes |
 | `pnpm db:migrate` | Apply migrations to your local database |
 | `pnpm db:seed` | Load sample data |
@@ -277,6 +286,32 @@ Docker:
 - Never paste secrets into Claude. It is configured not to read `.env` files.
 - Type `/clear` between unrelated tasks.
 
+### 8.1 Desktop app or CLI
+
+Both run the same Claude Code and read the same settings, `CLAUDE.md` and project plugins, so each developer can use whichever they prefer.
+
+- **Desktop app:** open the **Code** tab, set **Environment** to **Local**, **Project folder** to the repo, and pick a **Permission mode** (Manual, Accept edits, Plan, Auto). Review changes in the diff view (comment on lines, then Ctrl+Enter). Use the integrated terminal (Ctrl+`) for your own commands. `.claude/launch.json` tells the built-in browser preview how to start the web app.
+- **CLI:** run `claude` in the repo root; Shift+Tab cycles modes.
+- **Check Node in the Desktop app:** the app may not load your PowerShell profile, so fnm's Node can be missing. In a new session ask Claude to run `node -v` and `pnpm -v`. If they fail, install Node from nodejs.org (the same major version as `.nvmrc`) and reinstall pnpm.
+- **Worktrees:** parallel Desktop sessions can use Git worktrees under `.claude/worktrees/`, which is git-ignored.
+
+### 8.2 Plugins
+
+Install only Anthropic-verified plugins unless the team agrees otherwise; every plugin adds context to each conversation and can run code on your machine.
+
+| Plugin (from `claude-plugins-official`) | Scope | When |
+|---|---|---|
+| `typescript-lsp` | Project (shared) | From M0 merge; needs the TypeScript language server from section 2 |
+| `security-guidance` | Project (shared) | From M0 merge |
+| `frontend-design` | Project (shared) | From M3 (UI work) |
+| `code-review` | Project (shared) | From M0 merge, for PR reviews |
+| `explanatory-output-style` | Personal | Any time; explains why code is built the way it is |
+| `commit-commands` | Personal | Any time |
+| `learning-output-style` | Personal, optional | Makes you write key parts yourself; good interview practice |
+| `context7` (community) | Personal, optional | Current library docs in context |
+
+Install with `/plugin install <name>@claude-plugins-official` (CLI) or the plugin browser (Desktop app). Project-scope plugins are recorded in `.claude/settings.json`; add or remove them only through a pull request.
+
 ---
 
 ## 9. Environments
@@ -301,7 +336,8 @@ Staging and production secrets live only in the hosting platforms and GitHub Act
 - [ ] `.env` created with your own secrets
 - [ ] `pnpm bootstrap` and `pnpm healthcheck` pass
 - [ ] `pnpm dev` runs; http://localhost:3000 opens
-- [ ] Claude Code logged in; read `CLAUDE.md` and `docs/PROJECT_SPEC.md`
+- [ ] Claude Code (Desktop app and/or CLI) logged in; `node -v` works inside a Claude session; shared plugins installed (section 8.2)
+- [ ] Read `CLAUDE.md` and `docs/PROJECT_SPEC.md`
 - [ ] First small PR (for example, fixing something unclear in this guide) opened, reviewed and merged
 
 ---
@@ -315,9 +351,11 @@ Staging and production secrets live only in the hosting platforms and GitHub Act
 | `pnpm` / `npm` scripts blocked in PowerShell | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | `Filename too long` on Windows | `git config --global core.longpaths true`, then clone again. |
 | Wrong Node version / `Unsupported engine` | `fnm install; fnm use` in the repo root. |
-| App says an env variable is missing | Compare your `.env` with `.env.example`; a teammate probably added one. |
+| App says an env variable is missing | Run `pnpm bootstrap`: it appends variables a teammate added to `.env.example`. |
 | Database errors after pulling | `pnpm db:migrate`. Still broken locally: `pnpm db:reset`. |
+| Commit blocked: "gitleaks is not installed" | Install it (section 2). The hook fails closed on purpose: no scan, no commit. |
 | Commit blocked by gitleaks | You staged a secret. Unstage it, move it to `.env`. If it ever reached GitHub, rotate the secret immediately. |
 | Every line shows as changed | Line-ending problem: run `git add --renormalize .` and tell your teammate. |
 | Merge conflict in `pnpm-lock.yaml` | `git checkout --theirs pnpm-lock.yaml` (while merging `main`), then `pnpm install` and commit. |
+| Claude Desktop app can't find `node` or `pnpm` | Install Node from nodejs.org (same major as `.nvmrc`), then `npm install -g pnpm@12`; restart the app. |
 | Something else | `pnpm healthcheck`, then ask your teammate with the exact error message. |

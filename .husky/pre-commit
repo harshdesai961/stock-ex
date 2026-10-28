@@ -1,0 +1,19 @@
+# Runs before every commit (spec section 13). Husky runs this with sh, also on Windows (Git Bash).
+
+# 1. Secret scan of staged changes. Fails closed: no gitleaks, no commit.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "✘ gitleaks is not installed, so the commit is blocked (secret scanning is required)."
+  echo "  Windows: winget install --id Gitleaks.Gitleaks   macOS: brew install gitleaks"
+  exit 1
+fi
+gitleaks git --pre-commit --staged --redact --no-banner || {
+  echo "✘ gitleaks found a possible secret in the staged changes. Unstage it and move it to .env."
+  echo "  If it ever reached GitHub, rotate it immediately (docs/INCIDENT_RUNBOOK.md)."
+  exit 1
+}
+
+# 2. Format and lint the staged files.
+pnpm exec lint-staged
+
+# 3. Typecheck the packages touched by this branch.
+pnpm exec turbo run typecheck --affected --output-logs=errors-only

@@ -5,18 +5,18 @@ name: stock-ex
 
 services:
   postgres:
-    image: postgres:18-alpine          # pin the major version; bump deliberately
+    image: postgres:18-alpine # pin the major version; bump deliberately
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "127.0.0.1:5432:5432"          # reachable only from your own machine
+      - '127.0.0.1:5432:5432' # reachable only from your own machine
     volumes:
-      - pgdata:/var/lib/postgresql     # Postgres 18+ image mounts here (not .../data)
+      - pgdata:/var/lib/postgresql # Postgres 18+ image mounts here (not .../data)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -29,20 +29,62 @@ services:
     command:
       - redis-server
       - --appendonly
-      - "yes"                          # keep data across restarts
+      - 'yes' # keep data across restarts
       - --maxmemory-policy
-      - noeviction                     # required by BullMQ
+      - noeviction # required by BullMQ
       - --requirepass
       - ${REDIS_PASSWORD}
     ports:
-      - "127.0.0.1:6379:6379"
+      - '127.0.0.1:6379:6379'
     volumes:
       - redisdata:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"]
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" --no-auth-warning ping | grep PONG']
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # --- Production-like app containers (optional) ---
+  # docker compose --profile full up --build
+  # Builds web, server and worker from their production images and wires them to the
+  # databases above by service name. Day-to-day development uses `pnpm dev` instead.
+  server:
+    profiles: [full]
+    build: { context: ., dockerfile: docker/app.Dockerfile, args: { APP: server } }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - '127.0.0.1:4000:4000'
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  web:
+    profiles: [full]
+    build: { context: ., dockerfile: docker/app.Dockerfile, args: { APP: web } }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SERVER_URL: http://server:4000
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      server: { condition: service_started }
+
+  worker:
+    profiles: [full]
+    build: { context: ., dockerfile: docker/app.Dockerfile, args: { APP: ai-worker } }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      redis: { condition: service_healthy }
 
 volumes:
   pgdata:
