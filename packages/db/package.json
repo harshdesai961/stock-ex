@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@stock-ex/config": "workspace:*",
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.5",
     "drizzle-kit": "0.31.11",
     "eslint": "10.13.0",
     "tsx": "4.23.15",
