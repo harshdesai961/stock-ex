@@ -30,7 +30,7 @@ function Tile({ quote }: { quote: Quote }) {
   const up = quote.change > 0;
   const down = quote.change < 0;
   return (
-    <li className="rounded-card border border-ink-700 bg-ink-900/80 p-3">
+    <li className="min-w-0 rounded-card border border-ink-700 bg-ink-900/80 p-3">
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-mono text-xs font-semibold text-ink-300">{quote.ticker}</span>
         <span

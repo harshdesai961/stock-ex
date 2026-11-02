@@ -42,14 +42,17 @@ for (const path of ['/', '/how-to-play']) {
     expect(results.violations).toEqual([]);
   });
 
-  test(`${path} doesn't scroll sideways on a 360px phone`, async ({ page }) => {
-    await page.setViewportSize({ width: 360, height: 740 });
-    await page.goto(path);
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    );
-    expect(overflow).toBe(0);
-  });
+  // 320px is the WCAG reflow width; it also leaves a margin for fonts that render wider on Linux.
+  for (const width of [320, 360]) {
+    test(`${path} doesn't scroll sideways at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 740 });
+      await page.goto(path);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow).toBe(0);
+    });
+  }
 }
 
 test('Call the Market plays a full round and is accessible mid-round', async ({ page }) => {

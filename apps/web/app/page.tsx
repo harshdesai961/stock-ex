@@ -104,7 +104,7 @@ export default function HomePage() {
         <section className="hero-glow relative">
           <div className="grid-lines absolute inset-0" aria-hidden="true" />
           <FloatingIcons />
-          <div className="relative mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
+          <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
             <div>
               <p className="text-sm font-semibold tracking-wide text-accent-400 uppercase">
                 The multiplayer trading card table
