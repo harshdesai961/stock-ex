@@ -2,3 +2,12 @@
 // no clock and no unseeded randomness (enforced by the engine ESLint rules).
 // The rules, state machine, projection and bots are implemented in Milestone 1.
 export const ENGINE_VERSION = '0.0.0';
+
+export {
+  COMPANIES,
+  DEFAULT_STARTING_CASH,
+  LOT_SIZE,
+  SHARES_PER_COMPANY,
+  type CompanyConfig,
+  type CompanyId,
+} from './config/companies.js';

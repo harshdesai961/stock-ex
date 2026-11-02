@@ -282,6 +282,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@stock-ex/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@stock-ex/shared':
         specifier: workspace:*
         version: link:../../packages/shared
