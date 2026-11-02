@@ -1,0 +1,5 @@
+# Every pull request needs a review from the other developer (spec section 11).
+*                       @harshdesai961 @Twisha-Patel
+/packages/shared/       @harshdesai961 @Twisha-Patel
+/packages/db/migrations/ @harshdesai961 @Twisha-Patel
+/.github/               @harshdesai961 @Twisha-Patel

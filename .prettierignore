@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+node_modules/
+.next/
+dist/
+coverage/
+.turbo/
+playwright-report/
+test-results/
+packages/db/migrations/
+# Docs are hand-written (tables, wrapped prose); don't let Prettier reflow them.
+docs/
+*.md

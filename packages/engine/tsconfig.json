@@ -1,0 +1,10 @@
+{
+  "extends": "@stock-ex/config/tsconfig/base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["src"],
+  "exclude": ["src/sim"]
+}
