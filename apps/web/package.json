@@ -17,6 +17,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@stock-ex/engine": "workspace:*",
     "@stock-ex/shared": "workspace:*",
     "next": "16.4.3",
     "react": "19.3.1",

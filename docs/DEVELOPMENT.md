@@ -240,7 +240,7 @@ Push your branch even if it isn't finished. Open it as a **draft PR** (`gh pr cr
 | `pnpm typecheck` | TypeScript checks in all packages |
 | `pnpm test` / `pnpm test:watch` | Unit tests in every package |
 | `pnpm --filter @stock-ex/server test:integration` | Server tests against your running Postgres and Redis |
-| `pnpm test:e2e` | Playwright end-to-end + axe accessibility tests (reuses `pnpm dev` if running, otherwise builds and starts the web app). First time: `pnpm --filter @stock-ex/web exec playwright install chromium` |
+| `pnpm test:e2e` | Playwright end-to-end + axe accessibility tests (reuses `pnpm dev` if running, otherwise builds and starts the web app). First time: `pnpm --filter @stock-ex/web exec playwright install chromium`. To keep testing a production build while `pnpm dev` holds port 3000, set `E2E_PORT=3100` |
 | `pnpm db:generate` | Create a migration from schema changes |
 | `pnpm db:migrate` | Apply migrations to your local database |
 | `pnpm db:seed` | Load sample data |
