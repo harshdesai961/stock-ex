@@ -17,9 +17,9 @@
     "test:watch": "vitest --project unit"
   },
   "dependencies": {
-    "@nestjs/common": "12.3.2",
-    "@nestjs/core": "12.3.2",
-    "@nestjs/platform-express": "12.3.2",
+    "@nestjs/common": "12.3.3",
+    "@nestjs/core": "12.3.3",
+    "@nestjs/platform-express": "12.3.3",
     "@nestjs/throttler": "6.7.1",
     "@stock-ex/db": "workspace:*",
     "@stock-ex/shared": "workspace:*",
@@ -31,12 +31,12 @@
   },
   "devDependencies": {
     "@nestjs/cli": "12.0.11",
-    "@nestjs/testing": "12.3.2",
+    "@nestjs/testing": "12.3.3",
     "@stock-ex/config": "workspace:*",
     "@types/node": "24.19.2",
-    "eslint": "10.13.0",
+    "eslint": "10.14.0",
     "pino-pretty": "13.2.0",
     "typescript": "6.0.3",
-    "vitest": "5.0.5"
+    "vitest": "5.1.0"
   }
 }
