@@ -368,16 +368,25 @@ h2 {
  * Scroll reveal, in pure CSS: anything marked data-reveal slides up as it scrolls into view
  * (scroll-driven animations). No JavaScript, so nothing can clash with React's hydration.
  * Browsers without support simply show the content, unanimated.
+ * It moves the content but never fades it: a scroll-linked fade can leave text that sits
+ * across the fold half-transparent, below WCAG contrast, for as long as nobody scrolls.
  */
 @supports (animation-timeline: view()) {
   [data-reveal]:not(.stagger),
   [data-reveal].stagger > * {
-    animation: reveal-in linear both;
+    animation: reveal-scroll linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 45%;
   }
 }
 
+@keyframes reveal-scroll {
+  from {
+    transform: translateY(28px) scale(0.98);
+  }
+}
+
+/* Time-based entrance (finishes in about half a second), so fading is fine here. */
 @keyframes reveal-in {
   from {
     opacity: 0;
