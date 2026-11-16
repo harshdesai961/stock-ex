@@ -122,6 +122,18 @@ Rules:
 - If you add a variable, add it to `.env.example` (with a dummy value), to the Zod env schema, and to this guide, all in the same PR. Tell your teammate in the PR description.
 - **Local development needs no third-party accounts:** emails print to the server console, Google sign-in is hidden while its keys are empty, Turnstile uses Cloudflare's public test keys, Sentry is off without a DSN, and AI features are off unless `FEATURE_AI=true`.
 
+#### Email and sign-in variables (M4)
+
+| Variable | Needed for | Default / local value |
+|---|---|---|
+| `SMTP_HOST` | Sending verification and password-reset emails | Empty: each email is printed in the `pnpm dev` terminal instead. Production refuses to send without it. |
+| `SMTP_PORT`, `SMTP_SECURE` | How to connect | `587` + `false` (STARTTLS). Use `465` + `true` for TLS from the start. |
+| `SMTP_USER`, `SMTP_PASSWORD` | Logging in to the mail server | Empty. Use an app password or an SMTP key, never your normal email password. |
+| `EMAIL_FROM` | The From line people see | `stock-ex <no-reply@localhost>` |
+| `GOOGLE_*`, `DISCORD_*`, `FACEBOOK_*`, `TWITTER_*` (`_CLIENT_ID`, `_CLIENT_SECRET`) | Social sign-in buttons | Empty: the button says the provider isn't set up yet. |
+
+`docs/EMAIL.md` walks through filling in the SMTP values for Gmail, Brevo, Resend and Mailtrap. `RESEND_API_KEY` was removed: Resend is now used through its SMTP server like any other provider. An old `RESEND_API_KEY` line in your `.env` is ignored and can be deleted.
+
 ### 4.4 One-command setup (after M0)
 
 ```powershell

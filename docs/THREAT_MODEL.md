@@ -36,6 +36,15 @@ flowchart LR
 |---|---|---|---|---|
 | Browser → web | XSS via injected script | Nonce CSP with `strict-dynamic`, React escaping, `dangerouslySetInnerHTML` banned by lint | A05 | ✅ M0 |
 | Browser → web | Clickjacking | `frame-ancestors 'none'`, `X-Frame-Options: DENY` | A02 | ✅ M0 |
+| Browser → web | Third-party frames | Only `https://challenges.cloudflare.com` (Turnstile) may be framed (`frame-src`) | A02 | ✅ M4 |
+| Browser → web auth (/api/auth/*) | Password guessing, credential stuffing | Better Auth rate limits stored in Postgres: sign-in 5/min, sign-up 5/10 min, reset requests 3/15 min, verification resends 3/5 min per IP; scrypt hashing; one generic "email and password don't match" message | A07 | ✅ M4 |
+| Browser → web auth | Sign-up spam and email bombing | Cloudflare Turnstile on sign-up and reset requests, verified server-side; email verification before any session | A07 | ✅ M4 |
+| Browser → web auth | Under-18 accounts | 18+ flag required by a server hook (not just the form); social accounts confirm on /account; timestamp stored | (spec 8) | ✅ M4 |
+| Browser → web auth | Account probing (which emails exist) | Sign-up and reset requests answer the same either way; the real owner gets an email instead | A07 | ✅ M4 |
+| Browser → web auth | CSRF on auth endpoints | Better Auth rejects POSTs whose Origin isn't `WEB_URL` (tested: 403); httpOnly SameSite=Lax cookies, Secure in production | A01 | ✅ M4 |
+| Browser → web auth | Stolen session after a password reset | All sessions revoked on reset; "sign out on every device" on /account; server-side sign-out | A07 | ✅ M4 |
+| Web → SMTP | Links or addresses leak via logs | Email errors log only an error code; dev console masks the address; the dev outbox `.dev-mail/` is git-ignored and used only without SMTP outside production | A09 | ✅ M4 |
+| Web → SMTP | Password sent in clear | `requireTLS` on port 587, TLS from the start on 465 | A04 | ✅ M4 |
 | Browser → server | Cross-origin calls from other sites | CORS allowlist = `WEB_URL` only | A02 | ✅ M0 (HTTP); sockets M2 |
 | Browser → server | Request flooding | `@nestjs/throttler` 120 req/min/IP on HTTP; socket limits in M2 | A06 | ✅ M0 (HTTP) |
 | Browser → server | Spoofed identity in payloads | Identity only from verified socket token | A01/A07 | ⏳ M2 |

@@ -8,14 +8,17 @@ import { type NextRequest, NextResponse } from 'next/server';
 export function buildCsp(nonce: string, options: { isDev: boolean; serverUrl: string }): string {
   const server = new URL(options.serverUrl);
   const socket = `${server.protocol === 'https:' ? 'wss:' : 'ws:'}//${server.host}`;
+  // Cloudflare Turnstile (bot check on sign-up) loads a script and an iframe from here.
+  const turnstile = 'https://challenges.cloudflare.com';
   const directives = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${options.isDev ? ` 'unsafe-eval'` : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${turnstile}${options.isDev ? ` 'unsafe-eval'` : ''}`,
     // Dev tooling injects inline styles; production styles carry the nonce.
     `style-src 'self' ${options.isDev ? `'unsafe-inline'` : `'nonce-${nonce}'`}`,
     `img-src 'self' blob: data:`,
     `font-src 'self'`,
     `connect-src 'self' ${server.origin} ${socket}`,
+    `frame-src ${turnstile}`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,

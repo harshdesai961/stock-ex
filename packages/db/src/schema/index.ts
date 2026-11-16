@@ -1,4 +1,5 @@
-// Drizzle table definitions. Empty in M0: the first tables (games, game_players,
-// game_events) arrive in M2, Better Auth and profile tables in M4.
-// See docs/PROJECT_SPEC.md section 7 and the persistence proposal in docs/DECISIONS.md.
-export {};
+// Drizzle table definitions (docs/PROJECT_SPEC.md section 7).
+// M4 brings the Better Auth and profile tables; the game tables (games, game_players,
+// game_events) follow the persistence proposal in docs/DECISIONS.md.
+export { accounts, rateLimits, sessions, users, verifications } from './auth.js';
+export { profiles } from './profiles.js';

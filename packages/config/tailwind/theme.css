@@ -1,23 +1,38 @@
 /*
  * Shared design tokens (Tailwind CSS 4 is configured in CSS, not JS).
  * Import from an app stylesheet after `@import "tailwindcss";`.
- * Dark navy/purple base; green = bull (up), red = bear (down), purple = windfall.
+ * Board-game look: deep forest green table, cream headings, bright tile colours.
+ * Green = bull (up), red = bear (down). Purple is reserved for windfall cards only
+ * (docs/PROJECT_SPEC.md section 10).
  */
 @theme {
-  --color-ink-950: #0c0b1d;
-  --color-ink-900: #14132b;
-  --color-ink-800: #1e1c3d;
-  --color-ink-700: #2b2852;
-  --color-ink-300: #b9b6dc;
-  --color-ink-100: #ecebf8;
+  /* The table: darkest at 950, page background at 900. */
+  --color-ink-950: #072a19;
+  --color-ink-900: #0e3b24;
+  --color-ink-800: #154b2f;
+  --color-ink-700: #22653f;
+  --color-ink-300: #bcd6c3;
+  --color-ink-100: #fbf8ef;
 
-  --color-bull-500: #22c55e;
-  --color-bull-400: #4ade80;
-  --color-bear-500: #ef4444;
-  --color-bear-400: #f87171;
+  /* Heading cream and label green, as on a printed board. */
+  --color-sand-300: #dccfa0;
+  --color-leaf-400: #86d293;
+
+  /* Board tiles. */
+  --color-tile-blue: #1f6fd6;
+  --color-tile-orange: #f5821f;
+  --color-tile-yellow: #f8c12c;
+
+  --color-bull-500: #3da84a;
+  --color-bull-400: #63cf70;
+  --color-bull-700: #23702f;
+  --color-bear-500: #d32f2f;
+  --color-bear-400: #ff7a6b;
+  --color-bear-700: #8e1c1c;
   --color-windfall-500: #8b5cf6;
-  --color-windfall-400: #a78bfa;
-  --color-accent-400: #facc15;
+  --color-windfall-400: #b9a2ff;
+  --color-accent-400: #f8c12c;
+  --color-accent-700: #b4860f;
 
-  --radius-card: 1rem;
+  --radius-card: 1.25rem;
 }

@@ -48,3 +48,32 @@ The lockfile pins every transitive dependency; CI installs with `--frozen-lockfi
 ### NestJS dependency injection without magic
 Nest normally reads constructor parameter types from metadata the TypeScript compiler emits (`emitDecoratorMetadata`). We write `@Inject(HealthService)` explicitly, so DI also works in test runners that don't emit that metadata, and the code says exactly what it receives.
 → `apps/server/src/health/health.controller.ts`, `apps/server/vitest.config.ts`
+
+## Milestone 4 (first slice): accounts and email
+
+### Who checks the rules: the form or the server?
+Both, but only the server's check counts. The login card validates with the shared Zod schemas for instant feedback, and a Better Auth `before` hook runs `signUpRequestSchema` on the server. Anyone can skip the form and call `/api/auth/sign-up/email` directly; the hook still refuses a missing 18+ tick or a name like `<img>`.
+→ `packages/shared/src/auth.ts`, `apps/web/src/lib/auth.ts` (`hooks.before`)
+
+### Email verification before any session
+With `requireEmailVerification`, sign-up creates the user but no session. The emailed link carries a signed token; opening it marks the email verified and signs you in. Until then, logging in answers 403 and sends a fresh link.
+→ `apps/web/src/lib/auth.ts` (`emailVerification`), `apps/web/src/components/auth-card.tsx` (`inbox` mode)
+
+### Not telling attackers which emails exist
+"Forgot password" and "create account" reply the same whether or not the address has an account. The real owner gets an email ("someone tried to sign up with your address") and the stranger learns nothing.
+→ `onExistingUserSignUp` in `apps/web/src/lib/auth.ts`
+
+### Sending email after the response
+Better Auth hands each email's promise to `advanced.backgroundTasks`, and we pass it to Next's `after()`. The visitor gets an answer straight away, slow SMTP can't stall the request, and response times don't give away whether an account exists.
+
+### SMTP, not a vendor SDK
+nodemailer speaks plain SMTP, so moving from Gmail to Brevo to Resend is a change in `.env`, not in code. Without `SMTP_HOST`, development prints each email in the terminal and saves it to `.dev-mail/`; production refuses to send.
+→ `apps/web/src/lib/email/`, `docs/EMAIL.md`
+
+### Two copies of one library
+Better Auth brings `kysely`, an optional peer of drizzle-orm, so pnpm made a second copy of drizzle-orm for the web app, and Drizzle types from the two copies don't mix. The fix: apps never import drizzle-orm. All queries live in `@stock-ex/db` (`createProfile`, `getProfile`, `confirmAge`).
+→ `packages/db/src/profiles.ts`
+
+### Turnstile and the CSP
+Turnstile's script is added by a trusted script, which `'strict-dynamic'` allows, so the only CSP change is `frame-src https://challenges.cloudflare.com` for its iframe. Turnstile also checks the device clock: a PC whose clock is hours off sees "Incorrect device time".
+→ `apps/web/proxy.ts`

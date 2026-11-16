@@ -1,10 +1,12 @@
 'use client';
 
 import { formatNumber, formatRupees, formatSignedRupees } from '@stock-ex/shared';
+import { Check, Flame, Minus, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   dealRound,
   LOTS,
+  nextRank,
   settleCall,
   STARTING_BANK,
   sum,
@@ -34,17 +36,44 @@ function saveBest(best: number): void {
   }
 }
 
-function PriceCard({ value, mine }: { value: number; mine: boolean }) {
+function PriceCard({
+  value,
+  mine,
+  ticker,
+  dealt = false,
+}: {
+  value: number;
+  mine: boolean;
+  ticker: string;
+  dealt?: boolean;
+}) {
   const up = value > 0;
+  const Arrow = up ? TrendingUp : TrendingDown;
+  const tone = up ? 'text-bull-700' : 'text-bear-500';
   return (
     <li
-      className={`card-flip flex h-24 w-16 flex-col items-center justify-center rounded-xl border-2 bg-ink-100 font-mono sm:h-28 sm:w-20 ${up ? 'border-bull-500' : 'border-bear-500'}`}
+      className={`${dealt ? 'deal-in' : 'card-flip'} lift relative flex h-28 w-20 flex-col overflow-hidden rounded-xl border-2 border-ink-100 bg-ink-100 shadow-[0_5px_0_rgb(0_0_0/0.25)] sm:h-32 sm:w-24`}
     >
-      <span aria-hidden="true" className={up ? 'text-emerald-800' : 'text-red-800'}>
+      <span
+        className={`font-display px-1.5 py-0.5 text-center text-[11px] tracking-wider ${up ? 'bg-bull-500 text-ink-950' : 'bg-bear-500 text-ink-100'}`}
+      >
+        {ticker}
+      </span>
+      <span
+        aria-hidden="true"
+        className={`font-display absolute top-6 left-1.5 text-[11px] leading-none ${tone}`}
+      >
         {up ? '▲' : '▼'}
       </span>
-      <span className={`text-xl font-bold ${up ? 'text-emerald-800' : 'text-red-800'}`}>
-        {formatSignedRupees(value)}
+      <span className="flex flex-1 flex-col items-center justify-center gap-0.5">
+        <Arrow className={`h-6 w-6 ${tone}`} strokeWidth={2.5} aria-hidden="true" />
+        <span className={`font-display text-xl ${tone}`}>{formatSignedRupees(value)}</span>
+      </span>
+      <span
+        aria-hidden="true"
+        className={`font-display absolute right-1.5 bottom-1 rotate-180 text-[11px] leading-none ${tone}`}
+      >
+        {up ? '▲' : '▼'}
       </span>
       {mine ? <span className="sr-only">(your card)</span> : null}
     </li>
@@ -53,12 +82,35 @@ function PriceCard({ value, mine }: { value: number; mine: boolean }) {
 
 function HiddenCard() {
   return (
-    <li className="grid-lines flex h-24 w-16 items-center justify-center rounded-xl border-2 border-windfall-400 bg-ink-800 sm:h-28 sm:w-20">
-      <span aria-hidden="true" className="text-2xl font-bold text-windfall-400">
-        ?
+    <li className="card-back lift flex h-28 w-20 items-center justify-center rounded-xl border-2 border-ink-100 shadow-[0_5px_0_rgb(0_0_0/0.25)] sm:h-32 sm:w-24">
+      <span
+        aria-hidden="true"
+        className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ink-100 bg-tile-yellow text-ink-950"
+      >
+        <TrendingUp className="h-5 w-5" strokeWidth={3} />
       </span>
       <span className="sr-only">Hidden card</span>
     </li>
+  );
+}
+
+function LevelBar({ bank }: { bank: number }) {
+  const next = nextRank(Math.max(0, bank));
+  return (
+    <div className="mt-4">
+      <div className="flex justify-between text-xs text-ink-300">
+        <span className="font-display tracking-wider uppercase">
+          {next ? `Next rank: ${next.title}` : 'Top rank reached'}
+        </span>
+        {next ? <span className="font-mono">{formatRupees(next.atLeast)}</span> : null}
+      </div>
+      <progress
+        className="xp-bar mt-1"
+        value={next ? Math.max(0, bank) : 1}
+        max={next ? next.atLeast : 1}
+        aria-label={next ? `Progress to ${next.title}` : 'Top rank reached'}
+      />
+    </div>
   );
 }
 
@@ -169,28 +221,35 @@ export function CallTheMarket() {
   const settled = phase === 'settled' && result !== null && round !== null;
 
   return (
-    <div className="rounded-card border border-ink-700 bg-ink-900 p-4 sm:p-6">
+    <div className="panel p-4 sm:p-6">
       <dl className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-        <div className="rounded-lg bg-ink-800 p-2">
-          <dt className="text-xs text-ink-300">Practice bank</dt>
+        <div className="rounded-md border border-bull-500/25 bg-ink-950/60 p-2">
+          <dt className="font-display text-xs tracking-wider text-ink-300 uppercase">
+            Practice bank
+          </dt>
           <dd className="font-mono font-bold text-accent-400">{formatRupees(stats.bank)}</dd>
         </div>
-        <div className="rounded-lg bg-ink-800 p-2">
-          <dt className="text-xs text-ink-300">Rank</dt>
+        <div className="rounded-md border border-bull-500/25 bg-ink-950/60 p-2">
+          <dt className="font-display text-xs tracking-wider text-ink-300 uppercase">Rank</dt>
           <dd className="font-bold">{titleFor(stats.bank)}</dd>
         </div>
-        <div className="rounded-lg bg-ink-800 p-2">
-          <dt className="text-xs text-ink-300">Streak</dt>
+        <div className="rounded-md border border-bull-500/25 bg-ink-950/60 p-2">
+          <dt className="font-display text-xs tracking-wider text-ink-300 uppercase">Streak</dt>
           <dd className="font-mono font-bold">
-            {stats.streak >= 3 ? <span aria-hidden="true">🔥 </span> : null}
+            {stats.streak >= 3 ? (
+              <Flame className="mr-1 inline h-4 w-4 text-tile-orange" aria-hidden="true" />
+            ) : null}
             {stats.streak}
           </dd>
         </div>
-        <div className="rounded-lg bg-ink-800 p-2">
-          <dt className="text-xs text-ink-300">Best streak</dt>
+        <div className="rounded-md border border-bull-500/25 bg-ink-950/60 p-2">
+          <dt className="font-display text-xs tracking-wider text-ink-300 uppercase">
+            Best streak
+          </dt>
           <dd className="font-mono font-bold">{stats.best}</dd>
         </div>
       </dl>
+      <LevelBar bank={stats.bank} />
 
       {phase === 'idle' || !round ? (
         <div className="py-10 text-center">
@@ -201,7 +260,7 @@ export function CallTheMarket() {
           <button
             type="button"
             onClick={deal}
-            className="mt-5 cursor-pointer rounded-lg bg-accent-400 px-8 py-3 text-lg font-bold text-ink-950 hover:bg-windfall-400"
+            className="btn-game btn-primary mt-5 px-8 py-3 text-lg"
           >
             Deal me in
           </button>
@@ -222,7 +281,7 @@ export function CallTheMarket() {
               </h4>
               <ul className="flex gap-2">
                 {round.yours.map((value, index) => (
-                  <PriceCard key={index} value={value} mine />
+                  <PriceCard key={index} value={value} mine dealt ticker={round.company.ticker} />
                 ))}
               </ul>
             </div>
@@ -231,7 +290,12 @@ export function CallTheMarket() {
               <ul className="flex gap-2">
                 {round.table.map((value, index) =>
                   index < revealed ? (
-                    <PriceCard key={index} value={value} mine={false} />
+                    <PriceCard
+                      key={index}
+                      value={value}
+                      mine={false}
+                      ticker={round.company.ticker}
+                    />
                   ) : (
                     <HiddenCard key={index} />
                   ),
@@ -269,7 +333,7 @@ export function CallTheMarket() {
                   onClick={() => {
                     makeCall('bull');
                   }}
-                  className="cursor-pointer rounded-lg bg-bull-500 py-3 font-bold text-ink-950 hover:bg-bull-400"
+                  className="btn-game btn-bull py-3"
                 >
                   ▲ Bull: it will rise
                 </button>
@@ -278,7 +342,7 @@ export function CallTheMarket() {
                   onClick={() => {
                     makeCall('bear');
                   }}
-                  className="cursor-pointer rounded-lg bg-bear-500 py-3 font-bold text-ink-950 hover:bg-bear-400"
+                  className="btn-game btn-bear py-3"
                 >
                   ▼ Bear: it will fall
                 </button>
@@ -294,11 +358,38 @@ export function CallTheMarket() {
 
           <div aria-live="polite">
             {settled ? (
-              <div className="pop-in mt-5 rounded-lg border border-ink-700 bg-ink-800 p-4 text-center">
+              <div
+                className={`pop-in mt-5 rounded-lg border bg-ink-950/70 p-4 text-center ${result.outcome === 'win' ? 'border-bull-500' : result.outcome === 'lose' ? 'border-bear-500' : 'border-ink-700'}`}
+              >
+                <p
+                  className={`bounce-in font-display text-4xl font-bold uppercase ${result.outcome === 'win' ? 'text-leaf-400' : result.outcome === 'lose' ? 'text-bear-400' : 'text-ink-300'}`}
+                >
+                  {result.outcome === 'win' ? 'Win' : result.outcome === 'lose' ? 'Loss' : 'Flat'}
+                  {stats.streak >= 2 && result.outcome === 'win' ? (
+                    <span className="ml-3 align-middle text-lg text-accent-400">
+                      Combo ×{stats.streak}
+                    </span>
+                  ) : null}
+                </p>
                 <p className="text-lg font-bold">
-                  {result.outcome === 'win' ? '✔ Good call! ' : null}
-                  {result.outcome === 'lose' ? '✘ Wrong way. ' : null}
-                  {result.outcome === 'flat' ? '• No change. ' : null}
+                  {result.outcome === 'win' ? (
+                    <>
+                      <Check className="mr-1 inline h-5 w-5 text-bull-400" aria-hidden="true" />
+                      Good call!{' '}
+                    </>
+                  ) : null}
+                  {result.outcome === 'lose' ? (
+                    <>
+                      <X className="mr-1 inline h-5 w-5 text-bear-400" aria-hidden="true" />
+                      Wrong way.{' '}
+                    </>
+                  ) : null}
+                  {result.outcome === 'flat' ? (
+                    <>
+                      <Minus className="mr-1 inline h-5 w-5" aria-hidden="true" />
+                      No change.{' '}
+                    </>
+                  ) : null}
                   {round.company.ticker} moved {formatSignedRupees(result.change)} to{' '}
                   {formatRupees(result.newPrice)}
                 </p>
@@ -324,7 +415,7 @@ export function CallTheMarket() {
                       ref={firstAction}
                       type="button"
                       onClick={deal}
-                      className="cursor-pointer rounded-lg bg-accent-400 px-6 py-2 font-bold text-ink-950 hover:bg-windfall-400"
+                      className="btn-game btn-primary px-6 py-2"
                     >
                       Next round
                     </button>
@@ -333,7 +424,7 @@ export function CallTheMarket() {
                     ref={bankrupt ? firstAction : undefined}
                     type="button"
                     onClick={restart}
-                    className="cursor-pointer rounded-lg border border-ink-700 bg-ink-900 px-6 py-2 font-semibold hover:bg-ink-700"
+                    className="btn-game btn-ghost px-6 py-2"
                   >
                     Start over
                   </button>

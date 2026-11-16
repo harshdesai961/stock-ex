@@ -22,6 +22,10 @@ describe('buildCsp', () => {
     }
   });
 
+  it('lets only the Turnstile widget frame in', () => {
+    expect(prod).toContain('frame-src https://challenges.cloudflare.com');
+  });
+
   it('relaxes only what Next.js dev tooling needs in development', () => {
     const dev = buildCsp('n', { isDev: true, serverUrl: 'http://localhost:4000' });
     expect(dev).toContain(`'unsafe-eval'`);

@@ -73,9 +73,25 @@ export const webEnvSchema = commonEnvSchema.extend({
   NEXT_PUBLIC_SERVER_URL: url,
   BETTER_AUTH_SECRET: secret,
   SOCKET_TOKEN_SECRET: secret,
+  // Social sign-in: each button appears only when both its id and secret are set.
   GOOGLE_CLIENT_ID: optional(z.string()),
   GOOGLE_CLIENT_SECRET: optional(z.string()),
-  RESEND_API_KEY: optional(z.string()),
+  DISCORD_CLIENT_ID: optional(z.string()),
+  DISCORD_CLIENT_SECRET: optional(z.string()),
+  FACEBOOK_CLIENT_ID: optional(z.string()),
+  FACEBOOK_CLIENT_SECRET: optional(z.string()),
+  TWITTER_CLIENT_ID: optional(z.string()),
+  TWITTER_CLIENT_SECRET: optional(z.string()),
+  // Outgoing email (verification, password reset). Without SMTP_HOST, development prints
+  // each email to the terminal and production refuses to send (docs/EMAIL.md).
+  SMTP_HOST: optional(z.string()),
+  SMTP_PORT: port.default(587),
+  /** true = TLS from the first byte (port 465); false = STARTTLS upgrade (port 587). */
+  SMTP_SECURE: booleanFlag.default(false),
+  SMTP_USER: optional(z.string()),
+  SMTP_PASSWORD: optional(z.string()),
+  /** The From header, e.g. `stock-ex <no-reply@your-domain.com>`. */
+  EMAIL_FROM: z.string().min(3).default('stock-ex <no-reply@localhost>'),
   TURNSTILE_SITE_KEY: z.string().min(1),
   TURNSTILE_SECRET_KEY: z.string().min(1),
   SENTRY_DSN: optional(url),
