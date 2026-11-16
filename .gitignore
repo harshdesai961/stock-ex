@@ -29,3 +29,6 @@ docs/ui-reference/
 *.tsbuildinfo
 next-env.d.ts
 .env.backup-*
+
+# Emails saved by the dev mailer when SMTP is not configured (apps/web/src/lib/email/mailer.ts)
+.dev-mail/

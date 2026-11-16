@@ -1,6 +1,6 @@
 import { COMPANIES } from '@stock-ex/engine';
 import { describe, expect, it } from 'vitest';
-import { dealRound, settleCall, sum, titleFor } from './practice';
+import { dealRound, nextRank, settleCall, sum, titleFor } from './practice';
 
 /** A small seeded generator, so these tests are repeatable. */
 function seeded(seed: number) {
@@ -75,5 +75,13 @@ describe('titleFor', () => {
     expect(titleFor(600_000)).toBe('Trader');
     expect(titleFor(1_000_000)).toBe('Tycoon');
     expect(titleFor(2_000_000)).toBe('Market Legend');
+  });
+});
+
+describe('nextRank', () => {
+  it('points at the next title up, and stops at the top', () => {
+    expect(nextRank(100_000)).toEqual({ title: 'Trader', atLeast: 600_000 });
+    expect(nextRank(650_000)).toEqual({ title: 'Broker', atLeast: 800_000 });
+    expect(nextRank(1_600_000)).toBeNull();
   });
 });

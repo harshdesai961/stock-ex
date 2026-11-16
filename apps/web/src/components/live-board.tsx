@@ -1,7 +1,18 @@
 'use client';
 
 import { formatRupees } from '@stock-ex/shared';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { useMarket, type Quote } from './market-context';
+
+/** Header colours for the six company cards, in board-tile order. */
+const BANDS = [
+  'bg-tile-blue text-ink-100',
+  'bg-bear-500 text-ink-100',
+  'bg-tile-orange text-ink-950',
+  'bg-tile-yellow text-ink-950',
+  'bg-bull-500 text-ink-950',
+  'bg-ink-700 text-ink-100',
+] as const;
 
 function Sparkline({ values, rising }: { values: number[]; rising: boolean }) {
   const low = Math.min(...values);
@@ -17,7 +28,8 @@ function Sparkline({ values, rising }: { values: number[]; rising: boolean }) {
       <polyline
         points={points}
         fill="none"
-        strokeWidth="2"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
         className={rising ? 'stroke-bull-400' : 'stroke-bear-400'}
       />
@@ -25,29 +37,41 @@ function Sparkline({ values, rising }: { values: number[]; rising: boolean }) {
   );
 }
 
-function Tile({ quote }: { quote: Quote }) {
+function CompanyCard({ quote, band }: { quote: Quote; band: string }) {
   const first = quote.history.at(0) ?? quote.price;
   const up = quote.change > 0;
   const down = quote.change < 0;
   return (
-    <li className="min-w-0 rounded-card border border-ink-700 bg-ink-900/80 p-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="font-mono text-xs font-semibold text-ink-300">{quote.ticker}</span>
-        <span
-          className={`font-mono text-xs ${up ? 'text-bull-400' : down ? 'text-bear-400' : 'text-ink-300'}`}
-        >
-          {up ? '▲ +' : down ? '▼ −' : '• '}
-          {Math.abs(quote.change)}
-        </span>
+    <li className="lift min-w-0 overflow-hidden rounded-xl border-2 border-ink-100/80 bg-ink-950/70 text-ink-100 shadow-[0_5px_0_rgb(0_0_0/0.25)]">
+      <div className={`flex items-center justify-between gap-2 px-3 py-1.5 ${band}`}>
+        <span className="font-display text-sm tracking-wider">{quote.ticker}</span>
+        {up ? <TrendingUp className="h-4 w-4" aria-hidden="true" /> : null}
+        {down ? <TrendingDown className="h-4 w-4" aria-hidden="true" /> : null}
       </div>
-      <p
-        key={quote.tick}
-        className={`mt-1 rounded font-mono text-xl font-bold text-ink-100 ${up ? 'flash-up' : down ? 'flash-down' : ''}`}
-      >
-        {formatRupees(quote.price)}
-      </p>
-      <p className="truncate text-xs text-ink-300">{quote.name}</p>
-      <Sparkline values={quote.history} rising={quote.price >= first} />
+      <div className="px-3 pt-2 pb-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <p
+            key={quote.tick}
+            className={`font-display rounded px-1 text-2xl ${up ? 'flash-up' : down ? 'flash-down' : ''}`}
+          >
+            {formatRupees(quote.price)}
+          </p>
+          <span
+            className={`rounded-full px-2 py-0.5 font-mono text-xs font-bold ${
+              up
+                ? 'bg-bull-500/20 text-bull-400'
+                : down
+                  ? 'bg-bear-500/25 text-bear-400'
+                  : 'bg-ink-100/10 text-ink-300'
+            }`}
+          >
+            {up ? '▲ +' : down ? '▼ −' : '• '}
+            {Math.abs(quote.change)}
+          </span>
+        </div>
+        <p className="truncate text-xs text-ink-300">{quote.name}</p>
+        <Sparkline values={quote.history} rising={quote.price >= first} />
+      </div>
     </li>
   );
 }
@@ -56,9 +80,9 @@ export function LiveBoard() {
   const { quotes } = useMarket();
   return (
     <figure>
-      <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {quotes.map((quote) => (
-          <Tile key={quote.id} quote={quote} />
+      <ul className="stagger grid grid-cols-2 gap-3 lg:grid-cols-3">
+        {quotes.map((quote, index) => (
+          <CompanyCard key={quote.id} quote={quote} band={BANDS.at(index) ?? BANDS[0]} />
         ))}
       </ul>
       <figcaption className="mt-3 text-xs text-ink-300">

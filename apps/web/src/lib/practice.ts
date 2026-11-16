@@ -80,3 +80,8 @@ const TITLES = [
 export function titleFor(bank: number): string {
   return TITLES.find((tier) => bank >= tier.atLeast)?.title ?? 'Intern';
 }
+
+/** The next title to aim for, or null at the top rank. */
+export function nextRank(bank: number): { title: string; atLeast: number } | null {
+  return [...TITLES].reverse().find((tier) => bank < tier.atLeast) ?? null;
+}

@@ -18,11 +18,15 @@ Guests provide no email, phone, birth date, location or contacts.
 
 | Data | Purpose | Where | Processor | Retention |
 |---|---|---|---|---|
-| Email | Sign-in, verification, password reset, breach notices | Postgres | Hosting DB provider; email provider (Resend) | Until account deletion; inactive 3 years → deleted after notice |
-| Password hash | Sign-in | Postgres (Better Auth) | Hosting DB provider | Until deletion |
-| Google account ID | Google sign-in | Postgres | Google (identity provider) | Until deletion |
+| Email | Sign-in, verification, password reset, breach notices | Postgres `users.email` | Hosting DB provider; the SMTP provider in `SMTP_HOST` | Until account deletion; inactive 3 years → deleted after notice |
+| Password hash (scrypt) | Sign-in | Postgres `accounts.password` (Better Auth) | Hosting DB provider | Until deletion |
+| Social account ID and OAuth tokens (Google; Discord, Facebook, X when switched on) | Social sign-in | Postgres `accounts` | That provider (identity provider) | Until deletion |
+| Sessions: IP address, browser user agent, expiry | Keep you signed in; "sign out on every device"; abuse investigation | Postgres `sessions` | Hosting DB provider | Until the session expires or is revoked (7 days, refreshed daily) |
+| Verification and reset tokens | Confirm email ownership; reset a password | Postgres `verifications` (reset) or signed into the link (verification) | Hosting DB provider; the SMTP provider carries the link | 24 hours (verification), 1 hour (reset); one use |
+| Rate-limit counters (key = IP + route) | Slow down password guessing and email spam | Postgres `rate_limits` | Hosting DB provider | Overwritten each window |
+| Last active time | Inactive-account deletion after 3 years (spec 12.3) | Postgres `profiles.last_active_at` | Hosting DB provider | Until deletion |
 | Display name, avatar choice | Shown in games and leaderboards | Postgres | Hosting DB provider | Until deletion (game history anonymised) |
-| Age confirmation timestamp | Proof of 18+ confirmation | Postgres | Hosting DB provider | Until deletion |
+| Age confirmation timestamp | Proof of 18+ confirmation | Postgres `profiles.age_confirmed_at` | Hosting DB provider | Until deletion |
 | Game history, stats | Match history, leaderboards, replays | Postgres | Hosting DB provider | Until deletion; then anonymised |
 
 ## Operational data
@@ -38,7 +42,7 @@ Guests provide no email, phone, birth date, location or contacts.
 |---|---|---|
 | Hosting provider (web: Vercel; server/worker: Railway, Render or Fly.io) | Runs the apps, holds logs | Chosen at M3/M7 |
 | Managed Postgres / Redis provider | Stores data | Chosen at M3/M7 |
-| Resend (or similar) | Sends verification and reset emails | M4 |
+| SMTP email provider (whichever `SMTP_HOST` points at; see docs/EMAIL.md) | Sends verification and reset emails | M4 (chosen per deployment) |
 | Sentry | Error tracking | M2 |
 | Cloudflare | DNS, TLS, Turnstile | M4/M7 |
 

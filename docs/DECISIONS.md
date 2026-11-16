@@ -105,6 +105,12 @@ Chosen for later milestones (installed when first used): socket.io 4.8.4, @socke
 | @playwright/test, @axe-core/playwright | Apache-2.0 / MPL-2.0 | E2E and accessibility tests (spec) |
 | tsx | MIT | Run TypeScript scripts (DB scripts, simulator) without a build step |
 
+| simple-icons (added for the sign-in buttons) | CC0-1.0 | Accurate brand logos for social sign-in buttons, which lucide no longer ships. Each logo is used only to identify its sign-in option. |
+| better-auth 1.7.18, @better-auth/drizzle-adapter 1.7.18 (M4 accounts) | MIT | Auth library named in the spec: email + password with scrypt hashing, email verification, password reset, sessions in Postgres, OAuth, built-in rate limiting and a Turnstile captcha plugin. Telemetry is switched off in our config. The adapter is a direct dependency because pnpm doesn't let us import a package we don't list. |
+| nodemailer 10.3.1, @types/nodemailer 8.0.2 (M4 email) | MIT-0 / MIT | Sends verification and reset emails over plain SMTP, so any provider works (Gmail, Brevo, Resend, Mailtrap) and nobody is locked in. No runtime dependencies. Replaces the RESEND_API_KEY plan: Resend is used through its SMTP server. |
+| @marsidev/react-turnstile 1.6.3 (M4 sign-up bot check) | MIT | Small, maintained React wrapper for Cloudflare Turnstile, the library Better Auth's docs point to. Cloudflare's script is added by a trusted script, which `strict-dynamic` allows; the CSP adds only `frame-src https://challenges.cloudflare.com`. |
+| lucide-react 1.65.0 (added for the landing and login screens) | ISC | Consistent, accessible SVG icons in place of emoji. Tree-shaken per icon, renders plain inline SVG (no inline styles, so the strict CSP is unaffected), actively maintained and widely used |
+
 Not added on purpose: `dotenv` (Node's built-in loader), `supertest` (Node's built-in `fetch`), `eslint-plugin-react` (doesn't support ESLint 10 yet; `dangerouslySetInnerHTML` is banned with a core `no-restricted-syntax` rule instead).
 
 ## Persistence proposal (implemented in M2/M4)

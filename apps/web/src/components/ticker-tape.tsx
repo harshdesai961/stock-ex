@@ -1,6 +1,7 @@
 'use client';
 
 import { formatRupees } from '@stock-ex/shared';
+import { Pause, Play } from 'lucide-react';
 import { useMarket, type Quote } from './market-context';
 
 function TapeItem({ quote }: { quote: Quote }) {
@@ -47,7 +48,12 @@ export function TickerTape() {
         aria-pressed={paused}
         className="shrink-0 cursor-pointer border-l border-ink-700 px-3 text-xs font-semibold text-ink-100 hover:bg-ink-800"
       >
-        {paused ? '▶ Play motion' : '❚❚ Pause motion'}
+        {paused ? (
+          <Play className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+        ) : (
+          <Pause className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+        )}
+        {paused ? 'Play motion' : 'Pause motion'}
       </button>
     </aside>
   );
