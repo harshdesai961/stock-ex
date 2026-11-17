@@ -102,6 +102,22 @@ function createAuth() {
 
     socialProviders: socialConfig(),
 
+    account: {
+      // We only need to know who the person is, but Better Auth still stores the tokens the
+      // provider hands back; keep them encrypted at rest (spec 12.3, minimisation).
+      encryptOAuthTokens: true,
+      accountLinking: {
+        enabled: true,
+        // A social login joins an existing email account only when both sides have proved the
+        // address: the provider says it's verified AND the local account confirmed its email.
+        // This blocks pre-registering someone's address with a password and waiting for them.
+        requireLocalEmailVerified: true,
+        allowDifferentEmails: false,
+        // Never copy the provider's name or photo over what the player chose here.
+        updateUserInfoOnLink: false,
+      },
+    },
+
     rateLimit: {
       enabled: true,
       // Kept in Postgres so every web instance shares the same counters.
@@ -113,6 +129,8 @@ function createAuth() {
         '/sign-up/email': { window: 600, max: 5 },
         '/request-password-reset': { window: 900, max: 3 },
         '/send-verification-email': { window: 300, max: 3 },
+        // Each call creates an OAuth state row; real people click this a few times at most.
+        '/sign-in/social': { window: 60, max: 10 },
       },
     },
 
@@ -148,12 +166,14 @@ function createAuth() {
     databaseHooks: {
       user: {
         create: {
-          // Names from Google, Discord and so on may not fit our rules; tidy them up.
+          // Names from Google, Discord and so on may not fit our rules; tidy them up. Their
+          // profile photo URL is dropped: avatars come only from our fixed set (spec 8) and we
+          // don't keep personal data we don't use (spec 12.3).
           before: (user, ctx) =>
             Promise.resolve(
               ctx?.path === '/sign-up/email'
                 ? { data: user }
-                : { data: { ...user, name: cleanDisplayName(user.name) } },
+                : { data: { ...user, name: cleanDisplayName(user.name), image: null } },
             ),
           // Every account gets a profile. Only the email form records the 18+ tick right away;
           // social accounts confirm on their account page.

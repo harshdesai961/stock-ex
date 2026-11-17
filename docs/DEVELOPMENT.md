@@ -120,7 +120,7 @@ Rules:
 
 - Never commit `.env`, paste it into chat, or send it to a teammate. Each developer has their own values.
 - If you add a variable, add it to `.env.example` (with a dummy value), to the Zod env schema, and to this guide, all in the same PR. Tell your teammate in the PR description.
-- **Local development needs no third-party accounts:** emails print to the server console, Google sign-in is hidden while its keys are empty, Turnstile uses Cloudflare's public test keys, Sentry is off without a DSN, and AI features are off unless `FEATURE_AI=true`.
+- **Local development needs no third-party accounts:** emails print to the server console, the Google button just explains it isn't set up while its keys are empty, Turnstile uses Cloudflare's public test keys, Sentry is off without a DSN, and AI features are off unless `FEATURE_AI=true`.
 
 #### Email and sign-in variables (M4)
 
@@ -131,6 +131,24 @@ Rules:
 | `SMTP_USER`, `SMTP_PASSWORD` | Logging in to the mail server | Empty. Use an app password or an SMTP key, never your normal email password. |
 | `EMAIL_FROM` | The From line people see | `stock-ex <no-reply@localhost>` |
 | `GOOGLE_*`, `DISCORD_*`, `FACEBOOK_*`, `TWITTER_*` (`_CLIENT_ID`, `_CLIENT_SECRET`) | Social sign-in buttons | Empty: the button says the provider isn't set up yet. |
+
+#### Turning on Google sign-in (about 10 minutes, free)
+
+Each developer makes their own OAuth client; never share the secret. You need a Google account with 2-step verification on.
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/), create a project named `stock-ex-dev`.
+2. **APIs & Services → OAuth consent screen** (now called *Google Auth Platform*): choose **External**, app name `stock-ex`, your email as support and developer contact. Scopes: only `openid`, `.../auth/userinfo.email`, `.../auth/userinfo.profile` (the defaults; ask for nothing more). Leave the app in **Testing** and add your own Google address (and your teammate's) under **Test users**.
+3. **Clients → Create client → Web application**:
+   - Authorised JavaScript origins: `http://localhost:3000`
+   - Authorised redirect URIs: `http://localhost:3000/api/auth/callback/google`
+4. Copy the Client ID and Client secret into your root `.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, then restart `pnpm dev`.
+5. On `/login`, **Continue with Google** now goes to Google's account picker. A new Google account lands on `/account` and is asked to confirm it is 18+ before anything else.
+
+Things to know:
+
+- The redirect URI must match `WEB_URL` exactly (scheme, host, port, path). `127.0.0.1` and `localhost` are different to Google.
+- Staging and production each get their **own** client with their own HTTPS URLs; publishing the consent screen (leaving *Testing*) needs a privacy-policy URL, which arrives in M4.
+- If the email already has a password account, Google joins it only once that account's email is confirmed; otherwise the login page explains what to do. Google's profile photo is not stored (avatars come from our fixed set).
 
 `docs/EMAIL.md` walks through filling in the SMTP values for Gmail, Brevo, Resend and Mailtrap. `RESEND_API_KEY` was removed: Resend is now used through its SMTP server like any other provider. An old `RESEND_API_KEY` line in your `.env` is ignored and can be deleted.
 

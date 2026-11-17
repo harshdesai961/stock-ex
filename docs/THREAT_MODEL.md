@@ -40,6 +40,9 @@ flowchart LR
 | Browser → web auth (/api/auth/*) | Password guessing, credential stuffing | Better Auth rate limits stored in Postgres: sign-in 5/min, sign-up 5/10 min, reset requests 3/15 min, verification resends 3/5 min per IP; scrypt hashing; one generic "email and password don't match" message | A07 | ✅ M4 |
 | Browser → web auth | Sign-up spam and email bombing | Cloudflare Turnstile on sign-up and reset requests, verified server-side; email verification before any session | A07 | ✅ M4 |
 | Browser → web auth | Under-18 accounts | 18+ flag required by a server hook (not just the form); social accounts confirm on /account; timestamp stored | (spec 8) | ✅ M4 |
+| Browser → web auth → Google | Pre-account takeover (attacker registers a victim's email with a password, victim later uses Google) | Accounts are linked only when Google says the email is verified **and** the local account has confirmed its email (`requireLocalEmailVerified`); different emails never link | A07 | ✅ M4 |
+| Browser → web auth → Google | Login CSRF / forged OAuth callback | Better Auth signs a one-time `state` (stored in Postgres) plus PKCE on every sign-in; unknown or reused state is rejected; `/sign-in/social` limited to 10/min per IP | A01/A07 | ✅ M4 |
+| Web → Postgres | Leaked DB dump exposes Google tokens | OAuth access/refresh tokens encrypted at rest (`encryptOAuthTokens`); provider photo URL not stored | A04 | ✅ M4 |
 | Browser → web auth | Account probing (which emails exist) | Sign-up and reset requests answer the same either way; the real owner gets an email instead | A07 | ✅ M4 |
 | Browser → web auth | CSRF on auth endpoints | Better Auth rejects POSTs whose Origin isn't `WEB_URL` (tested: 403); httpOnly SameSite=Lax cookies, Secure in production | A01 | ✅ M4 |
 | Browser → web auth | Stolen session after a password reset | All sessions revoked on reset; "sign out on every device" on /account; server-side sign-out | A07 | ✅ M4 |
