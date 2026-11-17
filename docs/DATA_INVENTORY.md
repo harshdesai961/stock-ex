@@ -20,7 +20,7 @@ Guests provide no email, phone, birth date, location or contacts.
 |---|---|---|---|---|
 | Email | Sign-in, verification, password reset, breach notices | Postgres `users.email` | Hosting DB provider; the SMTP provider in `SMTP_HOST` | Until account deletion; inactive 3 years → deleted after notice |
 | Password hash (scrypt) | Sign-in | Postgres `accounts.password` (Better Auth) | Hosting DB provider | Until deletion |
-| Social account ID and OAuth tokens (Google; Discord, Facebook, X when switched on) | Social sign-in | Postgres `accounts` | That provider (identity provider) | Until deletion |
+| Social account ID and OAuth tokens (Google; Discord, Facebook, X when switched on) | Social sign-in. Tokens are encrypted at rest and not used for anything else; the provider's name is tidied to our display-name rules and its profile-photo URL is discarded | Postgres `accounts` | That provider (identity provider) | Until deletion |
 | Sessions: IP address, browser user agent, expiry | Keep you signed in; "sign out on every device"; abuse investigation | Postgres `sessions` | Hosting DB provider | Until the session expires or is revoked (7 days, refreshed daily) |
 | Verification and reset tokens | Confirm email ownership; reset a password | Postgres `verifications` (reset) or signed into the link (verification) | Hosting DB provider; the SMTP provider carries the link | 24 hours (verification), 1 hour (reset); one use |
 | Rate-limit counters (key = IP + route) | Slow down password guessing and email spam | Postgres `rate_limits` | Hosting DB provider | Overwritten each window |
