@@ -1,7 +1,16 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+
+/**
+ * Axe measures colours as they are painted right now, so a fade-in caught halfway reads as a
+ * contrast failure that no one ever sees. With reduced motion every entrance finishes at once
+ * (globals.css), and axe checks the colours the page settles on.
+ */
+async function settleMotion(page: Page) {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+}
 
 test('landing page loads and labels money as play money', async ({ page }) => {
   await page.goto('/');
@@ -37,6 +46,7 @@ for (const path of ['/', '/how-to-play']) {
   });
 
   test(`${path} has no detectable accessibility violations (WCAG 2.2 AA)`, async ({ page }) => {
+    await settleMotion(page);
     await page.goto(path);
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
     expect(results.violations).toEqual([]);
@@ -56,6 +66,7 @@ for (const path of ['/', '/how-to-play']) {
 }
 
 test('Call the Market plays a full round and is accessible mid-round', async ({ page }) => {
+  await settleMotion(page);
   await page.goto('/');
   const practice = page.locator('#practice');
   await practice.getByRole('button', { name: 'Deal me in' }).click();
