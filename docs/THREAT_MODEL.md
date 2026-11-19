@@ -48,13 +48,15 @@ flowchart LR
 | Browser → web auth | Stolen session after a password reset | All sessions revoked on reset; "sign out on every device" on /account; server-side sign-out | A07 | ✅ M4 |
 | Web → SMTP | Links or addresses leak via logs | Email errors log only an error code; dev console masks the address; the dev outbox `.dev-mail/` is git-ignored and used only without SMTP outside production | A09 | ✅ M4 |
 | Web → SMTP | Password sent in clear | `requireTLS` on port 587, TLS from the start on 465 | A04 | ✅ M4 |
-| Browser → server | Cross-origin calls from other sites | CORS allowlist = `WEB_URL` only | A02 | ✅ M0 (HTTP); sockets M2 |
-| Browser → server | Request flooding | `@nestjs/throttler` 120 req/min/IP on HTTP; socket limits in M2 | A06 | ✅ M0 (HTTP) |
-| Browser → server | Spoofed identity in payloads | Identity only from verified socket token | A01/A07 | 🟡 M2: token + checker built (`SocketAuthService`); gateway uses it next slice |
+| Browser → server | Cross-origin calls from other sites | CORS allowlist = `WEB_URL` only; sockets: `allowRequest` refuses any other Origin before the WebSocket upgrade, and the auth middleware checks it again | A02 | ✅ M0 (HTTP), M2 (sockets) |
+| Browser → server | Request flooding | HTTP: `@nestjs/throttler` 120 req/min/IP. Sockets: 40 connections/min per IP and 120 events/10 s per user (Redis, shared by all instances), 60 events/10 s per socket (in memory); over the limit the event is refused with `rate_limited`, and a socket sending twice its limit is disconnected. Chat and room limits come with those slices | A06 | ✅ M0 (HTTP), M2 (sockets) |
+| Browser → server | Oversized or malformed socket messages | `maxHttpBufferSize` 16 KB; WebSocket transport only; every payload Zod-checked in its handler, answered with a typed `bad_request` | A05/A06 | ✅ M2 |
+| Browser → server | Spoofed identity in payloads | Identity only from the verified socket token, checked on every connection and reconnection and stored in `socket.data.identity`; handlers never read identity from a payload | A01/A07 | ✅ M2 |
+| Browser → server | Spoofed client IP to dodge limits | `X-Forwarded-For` ignored unless `TRUST_PROXY=true`, then only its last entry (the one our proxy added) | A06 | ✅ M2 |
 | Browser → web (`/api/socket-token`) | Another site obtains a token for a visitor | Origin must equal `WEB_URL` (403 otherwise); token only in the response body, which other sites can't read; `Cache-Control: no-store` | A01 | ✅ M2 |
 | Browser → web (`/api/socket-token`) | Forged or stolen socket token | HS256 with the 32-byte `SOCKET_TOKEN_SECRET`, algorithm pinned (no `alg: none`), issuer + audience checked, 5-minute lifetime enforced from `iat` as well as `exp`, Zod-checked claims, never written to storage or logs | A04/A07 | ✅ M2 |
 | Browser → web (`/api/socket-token`) | Guest takes over an account's seat, or another guest's | Guest ids are 128 random bits with a `g_` prefix that account ids may never use; kept in an httpOnly, SameSite=Lax cookie (`__Host-` and Secure in production) | A01 | ✅ M2 |
-| Browser → web (`/api/socket-token`) | Token-request flooding | Body capped at 256 bytes and Zod-checked; per-IP connection limits on the game server | A06 | ⏳ M2 gateway slice |
+| Browser → web (`/api/socket-token`) | Token-request flooding | Body capped at 256 bytes and Zod-checked; a token is useless without a connection, and the game server allows 40 connections/min per IP | A06 | ✅ M2 |
 | Browser → server | Reading hidden cards | `projectForPlayer` is the only output path; leak tests | A01 | ⏳ M1/M2 |
 | Browser → server | Race to double-spend | Per-room queue + `stateVersion` + idempotency keys | A06 | ⏳ M2 |
 | Server → client | Error details leak internals | Global exception filter returns `{code, message}`; 5xx messages hidden | A10 | ✅ M0 |
