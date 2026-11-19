@@ -4,6 +4,22 @@ export const PRODUCT_NAME = 'stock-ex';
 
 export { formatNumber, formatRupees, formatSignedRupees } from './format.js';
 export {
+  SOCKET_MAX_MESSAGE_BYTES,
+  SOCKET_TRANSPORTS,
+  clientEvents,
+  connectRefusalSchema,
+  presencePingSchema,
+  socketErrorCodeSchema,
+  type Ack,
+  type ClientEvent,
+  type ClientToServerEvents,
+  type ConnectRefusal,
+  type PresencePong,
+  type ServerToClientEvents,
+  type SocketError,
+  type SocketErrorCode,
+} from './socket.js';
+export {
   GUEST_ID_PATTERN,
   NICKNAME_MAX,
   guestTokenRequestSchema,

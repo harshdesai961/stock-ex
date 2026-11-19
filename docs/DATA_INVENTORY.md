@@ -36,6 +36,7 @@ Guests provide no email, phone, birth date, location or contacts.
 |---|---|---|---|
 | Security logs (IP, user ID, event type; no passwords, tokens or emails, redacted by pino) | Detect and investigate abuse | Hosting log platform | At least 1 year (DPDP Rules), then deleted |
 | Error reports | Fix crashes | Sentry (PII scrubbing on) | Sentry default retention |
+| Socket rate-limit counters (key = IP address, or account/guest id; value = a count) | Stop connection and message flooding | Redis `stockex:rl:*` | Expire with their window (10–60 seconds) |
 
 ## Processors (vendors touching personal data)
 

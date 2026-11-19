@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { ConnectRefusal } from '@stock-ex/shared';
 import {
   SocketTokenError,
   verifySocketToken,
@@ -15,10 +16,10 @@ export interface HandshakeInput {
 }
 
 /**
- * Why a connection was refused. Clients see only this code: "expired" means fetch a fresh token
- * from /api/socket-token and reconnect; the other two mean stop trying.
+ * Why a connection was refused (the shared `ConnectRefusal` codes). Clients see only this code:
+ * "expired" means fetch a fresh token from /api/socket-token and reconnect.
  */
-export type SocketAuthErrorCode = 'bad_origin' | 'expired' | 'invalid';
+export type SocketAuthErrorCode = ConnectRefusal;
 
 export class SocketAuthError extends Error {
   constructor(readonly code: SocketAuthErrorCode) {

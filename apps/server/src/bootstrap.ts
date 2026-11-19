@@ -8,6 +8,7 @@ import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import type { ServerEnv } from './config/env.js';
 import { PinoNestLogger } from './logger/logger.js';
+import { RedisIoAdapter } from './realtime/redis-io.adapter.js';
 
 /** Builds the hardened HTTP app. Shared by main.ts and the integration tests. */
 export async function createApp(env: ServerEnv, logger: Logger): Promise<INestApplication> {
@@ -23,6 +24,10 @@ export async function createApp(env: ServerEnv, logger: Logger): Promise<INestAp
   // Only the web app's own origin may call the server from a browser (spec 12.1 A02).
   app.enableCors({ origin: [env.WEB_URL], credentials: true });
   app.useGlobalFilters(new AllExceptionsFilter(logger));
+  // Sockets share the HTTP port; the adapter adds the hardened options and Redis fan-out.
+  const io = new RedisIoAdapter(app, env);
+  await io.connect();
+  app.useWebSocketAdapter(io);
   app.enableShutdownHooks();
   return app;
 }
