@@ -50,7 +50,11 @@ flowchart LR
 | Web → SMTP | Password sent in clear | `requireTLS` on port 587, TLS from the start on 465 | A04 | ✅ M4 |
 | Browser → server | Cross-origin calls from other sites | CORS allowlist = `WEB_URL` only | A02 | ✅ M0 (HTTP); sockets M2 |
 | Browser → server | Request flooding | `@nestjs/throttler` 120 req/min/IP on HTTP; socket limits in M2 | A06 | ✅ M0 (HTTP) |
-| Browser → server | Spoofed identity in payloads | Identity only from verified socket token | A01/A07 | ⏳ M2 |
+| Browser → server | Spoofed identity in payloads | Identity only from verified socket token | A01/A07 | 🟡 M2: token + checker built (`SocketAuthService`); gateway uses it next slice |
+| Browser → web (`/api/socket-token`) | Another site obtains a token for a visitor | Origin must equal `WEB_URL` (403 otherwise); token only in the response body, which other sites can't read; `Cache-Control: no-store` | A01 | ✅ M2 |
+| Browser → web (`/api/socket-token`) | Forged or stolen socket token | HS256 with the 32-byte `SOCKET_TOKEN_SECRET`, algorithm pinned (no `alg: none`), issuer + audience checked, 5-minute lifetime enforced from `iat` as well as `exp`, Zod-checked claims, never written to storage or logs | A04/A07 | ✅ M2 |
+| Browser → web (`/api/socket-token`) | Guest takes over an account's seat, or another guest's | Guest ids are 128 random bits with a `g_` prefix that account ids may never use; kept in an httpOnly, SameSite=Lax cookie (`__Host-` and Secure in production) | A01 | ✅ M2 |
+| Browser → web (`/api/socket-token`) | Token-request flooding | Body capped at 256 bytes and Zod-checked; per-IP connection limits on the game server | A06 | ⏳ M2 gateway slice |
 | Browser → server | Reading hidden cards | `projectForPlayer` is the only output path; leak tests | A01 | ⏳ M1/M2 |
 | Browser → server | Race to double-spend | Per-room queue + `stateVersion` + idempotency keys | A06 | ⏳ M2 |
 | Server → client | Error details leak internals | Global exception filter returns `{code, message}`; 5xx messages hidden | A10 | ✅ M0 |
