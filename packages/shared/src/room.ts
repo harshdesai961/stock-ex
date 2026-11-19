@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { ChatMessage } from './chat.js';
 
 // Room lobby contracts (spec 6, 10.4), shared by the game server and the browser.
 
@@ -60,4 +61,6 @@ export interface RoomView {
 export interface RoomJoined {
   room: RoomView;
   you: { memberId: string; role: RoomRole };
+  /** The room's recent chat, oldest first. */
+  chat: ChatMessage[];
 }

@@ -1,10 +1,12 @@
 'use client';
 
 import {
+  CHAT_HISTORY,
   MAX_SPECTATORS,
   NICKNAME_MAX,
   nicknameSchema,
   type Ack,
+  type ChatMessage,
   type RoomJoined,
   type RoomMemberView,
   type RoomRole,
@@ -15,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore, type SyntheticEvent } from 'react';
 import { connectGameSocket, gameSocket, rememberNickname, savedNickname } from '@/lib/game-socket';
+import { RoomChat } from './room-chat';
 
 type Phase = 'joining' | 'name' | 'full' | 'in' | 'gone';
 
@@ -55,6 +58,7 @@ export function RoomLobby({ code, signedInAs }: { code: string; signedInAs?: str
   const [status, setStatus] = useState('');
   const [nickname, setNickname] = useState('');
   const [offline, setOffline] = useState(false);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
   const joined = useRef(false);
   const started = useRef(false);
 
@@ -66,6 +70,7 @@ export function RoomLobby({ code, signedInAs }: { code: string; signedInAs?: str
       joined.current = true;
       setRoom(reply.data.room);
       setYou(reply.data.you);
+      setChat(reply.data.chat);
       setPhase('in');
       setStatus('');
       return;
@@ -102,6 +107,14 @@ export function RoomLobby({ code, signedInAs }: { code: string; signedInAs?: str
     const onState = (next: RoomView) => {
       setRoom(next);
     };
+    // Your own messages arrive here too, so the reply to chat:send isn't added separately.
+    const onChat = (message: ChatMessage) => {
+      setChat((current) =>
+        current.some((m) => m.id === message.id)
+          ? current
+          : [...current, message].slice(-CHAT_HISTORY),
+      );
+    };
     const onRemoved = ({ reason }: { reason: 'kicked' | 'closed' }) => {
       joined.current = false;
       setPhase('gone');
@@ -117,11 +130,13 @@ export function RoomLobby({ code, signedInAs }: { code: string; signedInAs?: str
       if (joined.current) setOffline(true);
     };
     socket.on('room:state', onState);
+    socket.on('chat:message', onChat);
     socket.on('room:removed', onRemoved);
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     return () => {
       socket.off('room:state', onState);
+      socket.off('chat:message', onChat);
       socket.off('room:removed', onRemoved);
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
@@ -402,6 +417,8 @@ export function RoomLobby({ code, signedInAs }: { code: string; signedInAs?: str
               </ul>
             )}
           </section>
+
+          <RoomChat messages={chat} you={you.memberId} />
         </div>
       </div>
 

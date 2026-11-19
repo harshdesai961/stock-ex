@@ -215,7 +215,8 @@ export function view(room: RoomState): RoomView {
   };
 }
 
-export function joinedAs(room: RoomState, identityId: string): RoomJoined | null {
+/** The caller's place in the room; the gateway adds the chat history. */
+export function joinedAs(room: RoomState, identityId: string): Omit<RoomJoined, 'chat'> | null {
   const member = findByIdentity(room, identityId);
   return member
     ? { room: view(room), you: { memberId: member.memberId, role: member.role } }

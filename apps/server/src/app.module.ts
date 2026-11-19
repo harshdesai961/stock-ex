@@ -7,6 +7,8 @@ import { HealthService } from './health/health.service.js';
 import { RateLimitService } from './realtime/rate-limit.js';
 import { SocketAuthService } from './realtime/socket-auth.service.js';
 import { SocketGateway } from './realtime/socket.gateway.js';
+import { ChatGateway } from './rooms/chat.gateway.js';
+import { ChatStore } from './rooms/chat-store.js';
 import { RoomGateway } from './rooms/room.gateway.js';
 import { RoomStore } from './rooms/room-store.js';
 
@@ -32,6 +34,9 @@ export class AppModule {
         // Room lobby: live rooms in Redis, one change at a time per room (spec 6).
         RoomStore,
         RoomGateway,
+        // Table chat: recent history per room and a report queue (spec 6).
+        ChatStore,
+        ChatGateway,
       ],
     };
   }

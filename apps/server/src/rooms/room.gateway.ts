@@ -15,10 +15,12 @@ import {
 } from '@stock-ex/shared';
 import { LIMITS, RateLimitService } from '../realtime/rate-limit.js';
 import { badRequest, type GameServer, type GameSocket } from '../realtime/socket.gateway.js';
+import { ChatStore } from './chat-store.js';
 import * as rules from './room-rules.js';
 import { newMemberId, newRoomCode, RoomStore } from './room-store.js';
 
-const channel = (code: string) => `room:${code}`;
+/** The Socket.IO room every member of a lobby is in; broadcasts go here. */
+export const roomChannel = (code: string) => `room:${code}`;
 const BAD_PAYLOAD = 'That message wasn’t in the expected format.';
 const NOT_IN_ROOM: Ack<never> = {
   ok: false,
@@ -38,6 +40,7 @@ export class RoomGateway implements OnGatewayDisconnect<GameSocket> {
   constructor(
     @Inject(RoomStore) private readonly store: RoomStore,
     @Inject(RateLimitService) private readonly limits: RateLimitService,
+    @Inject(ChatStore) private readonly chat: ChatStore,
   ) {}
 
   @SubscribeMessage('room:create')
@@ -108,7 +111,7 @@ export class RoomGateway implements OnGatewayDisconnect<GameSocket> {
     const code = socket.data.roomCode;
     if (!code) return;
     // Another tab of the same person may still be connected to this room.
-    const others = await this.server.in(channel(code)).fetchSockets();
+    const others = await this.server.in(roomChannel(code)).fetchSockets();
     if (others.some((s) => s.id !== socket.id && s.data.identity.id === socket.data.identity.id)) {
       return;
     }
@@ -132,18 +135,19 @@ export class RoomGateway implements OnGatewayDisconnect<GameSocket> {
 
   /** Puts the socket in the room's channel, tells everyone, and replies with the caller's place. */
   private async enter(socket: GameSocket, room: rules.RoomState): Promise<Ack<RoomJoined>> {
-    await socket.join(channel(room.code));
+    await socket.join(roomChannel(room.code));
     socket.data.roomCode = room.code;
     this.broadcast(room.code, room);
     const joined = rules.joinedAs(room, socket.data.identity.id);
-    return joined ? { ok: true, data: joined } : NOT_IN_ROOM;
+    if (!joined) return NOT_IN_ROOM;
+    return { ok: true, data: { ...joined, chat: await this.chat.history(room.code) } };
   }
 
   private async leaveCurrent(socket: GameSocket) {
     const code = socket.data.roomCode;
     if (!code) return;
     socket.data.roomCode = undefined;
-    await socket.leave(channel(code));
+    await socket.leave(roomChannel(code));
     const outcome = await this.store.update(code, (room) =>
       rules.leave(room, socket.data.identity.id),
     );
@@ -152,16 +156,18 @@ export class RoomGateway implements OnGatewayDisconnect<GameSocket> {
 
   /** Removes every socket of a kicked person, on any server instance. */
   private async evict(code: string, identityId: string) {
-    const sockets = await this.server.in(channel(code)).fetchSockets();
+    const sockets = await this.server.in(roomChannel(code)).fetchSockets();
     for (const s of sockets.filter((s) => s.data.identity.id === identityId)) {
       s.emit('room:removed', { reason: 'kicked' });
-      s.leave(channel(code));
+      s.leave(roomChannel(code));
       s.data.roomCode = undefined;
     }
   }
 
+  /** Tells the room about a change; a closed room (null) also loses its chat history. */
   private broadcast(code: string, room: rules.RoomState | null) {
-    if (room) this.server.to(channel(code)).emit('room:state', rules.view(room));
+    if (room) this.server.to(roomChannel(code)).emit('room:state', rules.view(room));
+    else void this.chat.clear(code).catch(() => undefined);
   }
 }
 
