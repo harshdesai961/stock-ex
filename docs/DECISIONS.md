@@ -80,6 +80,7 @@ Chosen for later milestones (installed when first used): socket.io 4.8.4, @socke
 - **Context:** CI's `pnpm audit --audit-level high` failed on `multer` 2.4.0 (GHSA-q7qp-rjg7-q26m, DoS), which `@nestjs/platform-express` 12.2.0 (latest) pins exactly.
 - **Decision:** Force the patched `multer` 2.5.0 (same major) with `overrides` in `pnpm-workspace.yaml`. Each override has a comment naming the advisory and is removed as soon as the parent package ships the fix.
 - **Accepted:** a *moderate* esbuild advisory (dev server CORS) inside `drizzle-kit`'s dev-only loader. It never runs in production and is below the CI threshold; revisit on the next drizzle-kit release.
+- **Accepted (2026-11-19):** *high* GHSA-fc5q-39xc-vjpf, a ReDoS in `picomatch` <=4.0.7 with **no patched release** (4.0.7 is the latest), so no override is possible. Every path to it is tooling: `typescript-eslint` (via `@stock-ex/config`), Vitest/Vite and `tinyglobby`. They only match glob patterns from our own config, never user input, and none of it ships in the web app or game server. Listed in `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` so the audit still fails on every other high or critical advisory. **Remove the entry** once picomatch ships a fix (Dependabot will raise the bump).
 
 ## Dependencies added in M0
 
