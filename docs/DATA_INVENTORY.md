@@ -12,6 +12,7 @@ Required by the DPDP Act 2023 / DPDP Rules 2025 and good GDPR practice. **Update
 | Nickname (≤ 10 chars) | Shown to players at the table | Inside the 5-minute socket token; Redis room snapshot `stockex:room:<code>` with the guest id (the id is never sent to other players) | Token: 5 minutes. Room: TTL (6 hours after last activity); finished guest games are anonymised |
 | Random guest id (`g_` + 128 random bits) | Reconnect to your seat after a refresh | Browser cookie `stock-ex.guest` (`__Host-stock-ex.guest` in production), httpOnly, strictly necessary; inside the socket token | 24 hours, renewed when you play |
 | Socket token (signed; carries the guest id or account id and the display name) | Prove who you are to the game server | Browser memory only, never stored | 5 minutes |
+| Last nickname used | Fill it in when you open a room or invite link in the same tab | Browser `sessionStorage` (`stock-ex.nickname`), this tab only; never a token | Until the tab closes |
 
 Guests provide no email, phone, birth date, location or contacts.
 

@@ -22,6 +22,7 @@ import { SlideText } from '@/components/motion';
 import { RoomPanel } from '@/components/room-panel';
 import { SiteFooter, SiteHeader } from '@/components/site-chrome';
 import { TickerTape } from '@/components/ticker-tape';
+import { signedInName } from '@/lib/session';
 
 const HOST_STEPS = [
   {
@@ -133,7 +134,7 @@ function Kicker({ children }: { children: string }) {
   return <p className="label text-sm uppercase">{children}</p>;
 }
 
-export default function HomePage() {
+export default async function HomePage() {
   return (
     <MarketProvider>
       <SiteHeader />
@@ -163,7 +164,7 @@ export default function HomePage() {
                 )}
               </ul>
               <div className="mt-6 max-w-md">
-                <RoomPanel />
+                <RoomPanel signedInAs={await signedInName()} />
               </div>
             </div>
             <div className="min-w-0">
