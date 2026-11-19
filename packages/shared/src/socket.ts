@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { chatReportSchema, chatSendSchema, type ChatMessage } from './chat.js';
 import {
   roomCreateSchema,
   roomEmptySchema,
@@ -60,6 +61,8 @@ export const clientEvents = {
   'room:spectate': roomEmptySchema,
   'room:leave': roomEmptySchema,
   'room:kick': roomKickSchema,
+  'chat:send': chatSendSchema,
+  'chat:report': chatReportSchema,
 } as const;
 export type ClientEvent = keyof typeof clientEvents;
 
@@ -70,6 +73,8 @@ export interface ServerToClientEvents {
   'room:state': (room: RoomView) => void;
   /** You are no longer in the room (kicked, or the room closed). */
   'room:removed': (reason: { reason: 'kicked' | 'closed' }) => void;
+  /** A new chat message in your room. */
+  'chat:message': (message: ChatMessage) => void;
 }
 
 type Handler<E extends ClientEvent, R> = (
@@ -85,4 +90,6 @@ export interface ClientToServerEvents {
   'room:spectate': Handler<'room:spectate', RoomJoined>;
   'room:leave': Handler<'room:leave', null>;
   'room:kick': Handler<'room:kick', null>;
+  'chat:send': Handler<'chat:send', ChatMessage>;
+  'chat:report': Handler<'chat:report', null>;
 }

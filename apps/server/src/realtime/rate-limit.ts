@@ -17,6 +17,8 @@ export const LIMITS = {
   eventsPerUser: { max: 120, windowSeconds: 10 },
   /** New rooms per person (spec 12.2: 20 rooms or bots a minute). */
   roomsPerUser: { max: 20, windowSeconds: 60 },
+  /** Chat messages per person (spec 12.2: 8 chats / 10 s). */
+  chatPerUser: { max: 8, windowSeconds: 10 },
 } as const satisfies Record<string, Limit>;
 
 /** A socket sending this many times its limit in one window is disconnected. */

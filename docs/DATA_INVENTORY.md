@@ -20,6 +20,8 @@ Guests provide no email, phone, birth date, location or contacts.
 
 | Data | Purpose | Where | Processor | Retention |
 |---|---|---|---|---|
+| Table chat messages (text, display name, per-room member id, time) | Show the conversation, including to people who join later | Redis `stockex:room:<code>:chat`, last 50 per room | Hosting Redis provider | Room TTL (6 hours after last activity); deleted when the room closes |
+| Chat reports (the message, room code, the sender's and reporter's account or guest id, time) | Moderation of abuse (spec 6, community guidelines) | Redis `stockex:chat:reports`, at most 1,000 | Hosting Redis provider | 30 days |
 | Account id and display name while in a room | Seat you and show your name at the table; give your seat back after a refresh | Redis `stockex:room:<code>` (the account id is never sent to other players) | Hosting Redis provider | Room TTL (6 hours after last activity), or until the room closes |
 | Email | Sign-in, verification, password reset, breach notices | Postgres `users.email` | Hosting DB provider; the SMTP provider in `SMTP_HOST` | Until account deletion; inactive 3 years → deleted after notice |
 | Password hash (scrypt) | Sign-in | Postgres `accounts.password` (Better Auth) | Hosting DB provider | Until deletion |

@@ -4,6 +4,14 @@ export const PRODUCT_NAME = 'stock-ex';
 
 export { formatNumber, formatRupees, formatSignedRupees } from './format.js';
 export {
+  CHAT_HISTORY,
+  CHAT_MAX_LENGTH,
+  chatMessageIdSchema,
+  chatReportSchema,
+  chatSendSchema,
+  type ChatMessage,
+} from './chat.js';
+export {
   MAX_SEATS,
   MAX_SPECTATORS,
   MIN_SEATS,

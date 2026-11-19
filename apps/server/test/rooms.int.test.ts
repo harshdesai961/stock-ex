@@ -26,10 +26,13 @@ describe('rooms', () => {
     const keys = await redis.keys('stockex:rl:*');
     if (keys.length > 0) await redis.del(...keys);
     await redis.quit();
-    app = await createApp(env, pino({ level: 'silent' }));
+    // As in production behind a proxy, so each test client can have its own address and the
+    // 40-connections-a-minute limit (tested in socket.int.test.ts) never trips across tests.
+    const behindProxy = { ...env, TRUST_PROXY: true };
+    app = await createApp(behindProxy, pino({ level: 'silent' }));
     await app.listen(0, '127.0.0.1');
     baseUrl = await app.getUrl();
-    app2 = await createApp(env, pino({ level: 'silent' }));
+    app2 = await createApp(behindProxy, pino({ level: 'silent' }));
     await app2.listen(0, '127.0.0.1');
     baseUrl2 = await app2.getUrl();
   });
@@ -50,7 +53,11 @@ describe('rooms', () => {
     const socket = io(url, {
       transports: ['websocket'],
       auth: { token },
-      extraHeaders: { origin: new URL(env.WEB_URL).origin },
+      // 198.51.100.0/24 is reserved for documentation (RFC 5737).
+      extraHeaders: {
+        origin: new URL(env.WEB_URL).origin,
+        'x-forwarded-for': `198.51.100.${(names % 250) + 1}`,
+      },
       reconnection: false,
       forceNew: true,
     });

@@ -254,6 +254,9 @@ importers:
       ioredis:
         specifier: 6.0.0
         version: 6.0.0
+      obscenity:
+        specifier: 0.4.6
+        version: 0.4.6
       pino:
         specifier: 10.4.0
         version: 10.4.0
@@ -3252,6 +3255,10 @@ packages:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
     engines: {node: '>= 0.4'}
 
+  obscenity@0.4.6:
+    resolution: {integrity: sha512-pHk7kNN7j3L3zGhhGnwxjvXIGsPpLrcZl2r58fqWh/V/rH6b/dafscj2sMmAY+A/9/wPsocLmimgGk2DKeKsFQ==}
+    engines: {node: '>=18.0.0'}
+
   obug@3.0.0:
     resolution: {integrity: sha512-5vvB5+W7ePv+p3uqxi+RcW1XAzLW0/hxt3/4X4Lc4qHudzOhmBiBwOY6DRob4WnanAEGvNcLjF+KNOufrUoEQw==}
     engines: {node: '>=12.20.0'}
@@ -6154,6 +6161,8 @@ snapshots:
   object-hash@3.0.0: {}
 
   object-inspect@1.13.4: {}
+
+  obscenity@0.4.6: {}
 
   obug@3.0.0: {}
 
