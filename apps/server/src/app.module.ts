@@ -4,6 +4,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { SERVER_ENV, type ServerEnv } from './config/env.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
+import { SocketAuthService } from './realtime/socket-auth.service.js';
 
 @Module({})
 export class AppModule {
@@ -20,6 +21,8 @@ export class AppModule {
         { provide: SERVER_ENV, useValue: env },
         { provide: APP_GUARD, useClass: ThrottlerGuard },
         HealthService,
+        // Checks socket tokens; the Socket.IO gateway that calls it arrives in the next M2 slice.
+        SocketAuthService,
       ],
     };
   }

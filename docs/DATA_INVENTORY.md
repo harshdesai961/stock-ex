@@ -9,8 +9,9 @@ Required by the DPDP Act 2023 / DPDP Rules 2025 and good GDPR practice. **Update
 
 | Data | Purpose | Where | Retention |
 |---|---|---|---|
-| Nickname (≤ 10 chars) | Shown to players at the table | Redis room snapshot only | Room TTL (6 hours after last activity); finished guest games are anonymised |
-| Signed guest token | Reconnect to your seat | Browser cookie (httpOnly) + verified by server | Session |
+| Nickname (≤ 10 chars) | Shown to players at the table | Inside the 5-minute socket token; Redis room snapshot | Token: 5 minutes. Room: TTL (6 hours after last activity); finished guest games are anonymised |
+| Random guest id (`g_` + 128 random bits) | Reconnect to your seat after a refresh | Browser cookie `stock-ex.guest` (`__Host-stock-ex.guest` in production), httpOnly, strictly necessary; inside the socket token | 24 hours, renewed when you play |
+| Socket token (signed; carries the guest id or account id and the display name) | Prove who you are to the game server | Browser memory only, never stored | 5 minutes |
 
 Guests provide no email, phone, birth date, location or contacts.
 
