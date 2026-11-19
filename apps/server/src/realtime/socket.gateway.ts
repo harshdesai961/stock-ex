@@ -24,6 +24,8 @@ import { SocketAuthError, SocketAuthService } from './socket-auth.service.js';
 export interface SocketData {
   /** Set once by the auth middleware; the only identity any handler may use. */
   identity: SocketIdentity;
+  /** The room this socket is in, if any. One room per socket. */
+  roomCode?: string | undefined;
 }
 
 export type GameServer = Server<ClientToServerEvents, ServerToClientEvents, never, SocketData>;

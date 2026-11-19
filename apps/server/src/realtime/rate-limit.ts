@@ -15,6 +15,8 @@ export const LIMITS = {
   eventsPerSocket: { max: 60, windowSeconds: 10 },
   /** Events from one person across all their tabs and servers (Redis). */
   eventsPerUser: { max: 120, windowSeconds: 10 },
+  /** New rooms per person (spec 12.2: 20 rooms or bots a minute). */
+  roomsPerUser: { max: 20, windowSeconds: 60 },
 } as const satisfies Record<string, Limit>;
 
 /** A socket sending this many times its limit in one window is disconnected. */
