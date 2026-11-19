@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import {
+  roomCreateSchema,
+  roomEmptySchema,
+  roomJoinSchema,
+  roomKickSchema,
+  type RoomJoined,
+  type RoomView,
+} from './room.js';
 
 // Socket contracts shared by the game server and the browser (spec 6). Every event a client
 // sends is Zod-checked on the server; every reply uses the same acknowledgement shape.
@@ -22,6 +30,8 @@ export const socketErrorCodeSchema = z.enum([
   'rate_limited',
   'forbidden',
   'not_found',
+  /** The request clashes with the room as it is now: seats full, name taken, already there. */
+  'conflict',
   'internal',
 ]);
 export type SocketErrorCode = z.infer<typeof socketErrorCodeSchema>;
@@ -44,17 +54,35 @@ export interface PresencePong {
 /** Client → server events, each with its payload schema. */
 export const clientEvents = {
   'presence:ping': presencePingSchema,
+  'room:create': roomCreateSchema,
+  'room:join': roomJoinSchema,
+  'room:takeSeat': roomEmptySchema,
+  'room:spectate': roomEmptySchema,
+  'room:leave': roomEmptySchema,
+  'room:kick': roomKickSchema,
 } as const;
 export type ClientEvent = keyof typeof clientEvents;
 
 /** Server → client events. `error` reports problems that have no acknowledgement to ride on. */
 export interface ServerToClientEvents {
   error: (error: SocketError) => void;
+  /** The room changed; sent to everyone in it. */
+  'room:state': (room: RoomView) => void;
+  /** You are no longer in the room (kicked, or the room closed). */
+  'room:removed': (reason: { reason: 'kicked' | 'closed' }) => void;
 }
 
+type Handler<E extends ClientEvent, R> = (
+  payload: z.input<(typeof clientEvents)[E]>,
+  ack: (reply: Ack<R>) => void,
+) => void;
+
 export interface ClientToServerEvents {
-  'presence:ping': (
-    payload: z.input<typeof presencePingSchema>,
-    ack: (reply: Ack<PresencePong>) => void,
-  ) => void;
+  'presence:ping': Handler<'presence:ping', PresencePong>;
+  'room:create': Handler<'room:create', RoomJoined>;
+  'room:join': Handler<'room:join', RoomJoined>;
+  'room:takeSeat': Handler<'room:takeSeat', RoomJoined>;
+  'room:spectate': Handler<'room:spectate', RoomJoined>;
+  'room:leave': Handler<'room:leave', null>;
+  'room:kick': Handler<'room:kick', null>;
 }

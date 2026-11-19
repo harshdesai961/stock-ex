@@ -58,7 +58,11 @@ flowchart LR
 | Browser → web (`/api/socket-token`) | Guest takes over an account's seat, or another guest's | Guest ids are 128 random bits with a `g_` prefix that account ids may never use; kept in an httpOnly, SameSite=Lax cookie (`__Host-` and Secure in production) | A01 | ✅ M2 |
 | Browser → web (`/api/socket-token`) | Token-request flooding | Body capped at 256 bytes and Zod-checked; a token is useless without a connection, and the game server allows 40 connections/min per IP | A06 | ✅ M2 |
 | Browser → server | Reading hidden cards | `projectForPlayer` is the only output path; leak tests | A01 | ⏳ M1/M2 |
-| Browser → server | Race to double-spend | Per-room queue + `stateVersion` + idempotency keys | A06 | ⏳ M2 |
+| Browser → server | Race to double-spend | Per-room queue + `stateVersion` + idempotency keys | A06 | 🟡 M2: room changes run one at a time per room (in-process queue) and are saved with a Redis compare-and-set, so two servers can't both take the last seat (tested across two instances). `stateVersion` and idempotency keys arrive with game actions |
+| Browser → server (rooms) | Guessing room codes to join private games | 5 characters from a 29-letter alphabet picked with `crypto.randomInt` (~20 million codes); joining is rate-limited with every other event; codes expire with the room | A01 | ✅ M2 |
+| Browser → server (rooms) | Acting for someone else (kick, seat changes) | Every room event uses only `socket.data.identity`; payloads carry a room code or an opaque per-room member id, never an account or guest id; only the host may kick, and not themselves | A01 | ✅ M2 |
+| Browser → server (rooms) | Learning other players' account or guest ids | Room broadcasts carry display names and random per-room member ids only; ids stay in the server's Redis copy | A01 | ✅ M2 |
+| Browser → server (rooms) | Room spam filling Redis | 20 new rooms/min per person; rooms expire after `ROOM_TTL_SECONDS` without activity and are deleted when the last member leaves; spectators capped at 10 | A06 | ✅ M2 |
 | Server → client | Error details leak internals | Global exception filter returns `{code, message}`; 5xx messages hidden | A10 | ✅ M0 |
 | Apps → Postgres | SQL injection | Drizzle parameterised queries; DDL quoting via `format(%I, %L)` | A05 | ✅ M0 |
 | Apps → Postgres | Compromised app alters schema | App role has data privileges only; healthcheck verifies | A01/A08 | ✅ M0 |

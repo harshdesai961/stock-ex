@@ -4,6 +4,26 @@ export const PRODUCT_NAME = 'stock-ex';
 
 export { formatNumber, formatRupees, formatSignedRupees } from './format.js';
 export {
+  MAX_SEATS,
+  MAX_SPECTATORS,
+  MIN_SEATS,
+  ROOM_CODE_ALPHABET,
+  ROOM_CODE_LENGTH,
+  memberIdSchema,
+  roleSchema,
+  roomCodeSchema,
+  roomCreateSchema,
+  roomEmptySchema,
+  roomJoinSchema,
+  roomKickSchema,
+  roomSettingsSchema,
+  type RoomJoined,
+  type RoomMemberView,
+  type RoomRole,
+  type RoomSettings,
+  type RoomView,
+} from './room.js';
+export {
   SOCKET_MAX_MESSAGE_BYTES,
   SOCKET_TRANSPORTS,
   clientEvents,
