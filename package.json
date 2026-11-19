@@ -33,11 +33,11 @@
   "devDependencies": {
     "@stock-ex/config": "workspace:*",
     "@types/node": "24.19.2",
-    "eslint": "10.14.0",
+    "eslint": "10.15.0",
     "husky": "9.1.7",
-    "lint-staged": "17.6.0",
+    "lint-staged": "17.6.1",
     "prettier": "3.10.1",
-    "turbo": "2.11.10",
+    "turbo": "2.11.11",
     "typescript": "6.0.3"
   }
 }
