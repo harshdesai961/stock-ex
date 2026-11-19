@@ -7,3 +7,10 @@ allowBuilds:
 overrides:
   # GHSA-q7qp-rjg7-q26m (high). @nestjs/platform-express 12.2.0 pins multer 2.4.0.
   multer: 2.5.0
+# Accepted advisories with no patched release yet (docs/DECISIONS.md ADR-0010). Remove each
+# entry as soon as a fixed version exists, then upgrade or override instead.
+auditConfig:
+  ignoreGhsas:
+    # GHSA-fc5q-39xc-vjpf (high, ReDoS). picomatch <=4.0.7, latest is 4.0.7. Only reached by
+    # lint/build/test tooling matching our own glob patterns; nothing at runtime uses it.
+    - GHSA-fc5q-39xc-vjpf
