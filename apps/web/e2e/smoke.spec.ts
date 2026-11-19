@@ -82,7 +82,10 @@ test('Call the Market plays a full round and is accessible mid-round', async ({ 
   await expect(practice.getByText(/You called ▲ Bull on 1,000 shares/)).toBeVisible();
 });
 
-test('the room panel validates input and says rooms are not open yet', async ({ page }) => {
+// CI runs the web app without the game server, so this covers the panel's own checks and that
+// a valid code opens its room page. Creating and joining rooms is covered by the server's
+// integration tests.
+test('the room panel checks the nickname and code, then opens the room page', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Pick a nickname');
@@ -90,11 +93,21 @@ test('the room panel validates input and says rooms are not open yet', async ({ 
   await page.getByRole('button', { name: 'Pick a random nickname' }).click();
   await expect(page.getByLabel(/Your nickname/)).not.toHaveValue('');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('open soon');
+  await expect(page.getByRole('status')).toContainText('Quick play opens with public rooms');
 
   await page.getByLabel('Room code').fill('ab1');
   await page.getByRole('button', { name: 'Join' }).click();
   await expect(page.getByRole('status')).toContainText('5 characters');
+
+  // 0 (zero) is left out of room codes because it looks like O.
+  await page.getByLabel('Room code').fill('ab0cd');
+  await page.getByRole('button', { name: 'Join' }).click();
+  await expect(page.getByRole('status')).toContainText('That isn’t a room code');
+
+  await page.getByLabel('Room code').fill('ab2cd');
+  await page.getByRole('button', { name: 'Join' }).click();
+  await expect(page).toHaveURL(/\/room\/AB2CD$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('AB2CD');
 });
 
 test('motion can be paused', async ({ page }) => {

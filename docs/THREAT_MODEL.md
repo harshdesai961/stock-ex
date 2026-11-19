@@ -62,6 +62,7 @@ flowchart LR
 | Browser → server (rooms) | Guessing room codes to join private games | 5 characters from a 29-letter alphabet picked with `crypto.randomInt` (~20 million codes); joining is rate-limited with every other event; codes expire with the room | A01 | ✅ M2 |
 | Browser → server (rooms) | Acting for someone else (kick, seat changes) | Every room event uses only `socket.data.identity`; payloads carry a room code or an opaque per-room member id, never an account or guest id; only the host may kick, and not themselves | A01 | ✅ M2 |
 | Browser → server (rooms) | Learning other players' account or guest ids | Room broadcasts carry display names and random per-room member ids only; ids stay in the server's Redis copy | A01 | ✅ M2 |
+| Browser → web (`/room/<code>`) | Room pages indexed, or a crafted code injecting content | Code checked against the room-code schema before anything renders (not-found otherwise); `noindex, nofollow`; all room text comes from the server's `room:state` and is rendered by React, never as HTML | A03/A05 | ✅ M2 |
 | Browser → server (rooms) | Room spam filling Redis | 20 new rooms/min per person; rooms expire after `ROOM_TTL_SECONDS` without activity and are deleted when the last member leaves; spectators capped at 10 | A06 | ✅ M2 |
 | Server → client | Error details leak internals | Global exception filter returns `{code, message}`; 5xx messages hidden | A10 | ✅ M0 |
 | Apps → Postgres | SQL injection | Drizzle parameterised queries; DDL quoting via `format(%I, %L)` | A05 | ✅ M0 |

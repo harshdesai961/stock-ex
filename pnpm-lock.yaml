@@ -333,6 +333,9 @@ importers:
       simple-icons:
         specifier: 16.36.0
         version: 16.36.0
+      socket.io-client:
+        specifier: 4.8.4
+        version: 4.8.4
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.14.0

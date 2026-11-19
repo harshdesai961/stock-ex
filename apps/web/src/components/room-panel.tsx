@@ -1,6 +1,15 @@
 'use client';
 
+import {
+  NICKNAME_MAX,
+  nicknameSchema,
+  ROOM_CODE_LENGTH,
+  roomCodeSchema,
+  type RoomJoined,
+} from '@stock-ex/shared';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { connectGameSocket, rememberNickname } from '@/lib/game-socket';
 import { ColourDice } from './colour-dice';
 
 const NAMES = [
@@ -15,16 +24,16 @@ const NAMES = [
   'SmartLot',
   'MarketMia',
 ];
-const NICKNAME_MAX = 10;
-const CODE_LENGTH = 5;
+const QUICK_PLAY_SOON =
+  'Quick play opens with public rooms and bots. For now, create a private game and share the code.';
 
-const COMING_SOON =
-  'Live rooms are being built and open soon. For now, warm up with Call the Market below.';
-
-export function RoomPanel() {
+/** `signedInAs`: the account name, when logged in; guests pick a nickname instead. */
+export function RoomPanel({ signedInAs }: { signedInAs?: string | undefined }) {
+  const router = useRouter();
   const [nickname, setNickname] = useState('');
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const [rolls, setRolls] = useState(0);
   const [rolling, setRolling] = useState(false);
@@ -63,30 +72,74 @@ export function RoomPanel() {
     }, 75);
   };
 
-  const tryRoom = (event?: SyntheticEvent) => {
-    event?.preventDefault();
-    setMessage(nickname.trim() ? COMING_SOON : 'Pick a nickname first, or roll the dice for one.');
+  /** Checks and saves the guest nickname; accounts play under their account name. */
+  const nameReady = (): boolean => {
+    if (signedInAs) return true;
+    const result = nicknameSchema.safeParse(nickname);
+    if (!result.success) {
+      setMessage(result.error.issues[0]?.message ?? 'Pick a nickname first.');
+      return false;
+    }
+    rememberNickname(result.data);
+    return true;
   };
 
-  const tryJoin = (event: SyntheticEvent) => {
+  const quickPlay = (event: SyntheticEvent) => {
     event.preventDefault();
-    if (code.length !== CODE_LENGTH) {
-      setMessage(`Room codes have ${CODE_LENGTH} characters.`);
+    if (nameReady()) setMessage(QUICK_PLAY_SOON);
+  };
+
+  const createRoom = async () => {
+    if (busy || !nameReady()) return;
+    setBusy(true);
+    setMessage('Opening your room…');
+    try {
+      const socket = await connectGameSocket();
+      const reply = (await socket.timeout(8000).emitWithAck('room:create', { settings: {} })) as
+        { ok: true; data: RoomJoined } | { ok: false; error: { message: string } };
+      if (!reply.ok) {
+        setMessage(reply.error.message);
+        return;
+      }
+      router.push(`/room/${reply.data.room.code}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Something went wrong. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const joinRoom = (event: SyntheticEvent) => {
+    event.preventDefault();
+    const result = roomCodeSchema.safeParse(code);
+    if (!result.success) {
+      setMessage(
+        code.length === ROOM_CODE_LENGTH
+          ? 'That isn’t a room code. Check it with the host.'
+          : `Room codes have ${ROOM_CODE_LENGTH} characters.`,
+      );
       return;
     }
-    tryRoom();
+    if (!nameReady()) return;
+    router.push(`/room/${result.data}`);
   };
 
   return (
     <div className="panel p-5">
-      <form onSubmit={tryRoom}>
-        <label htmlFor="nickname" className="flex justify-between text-sm font-medium">
-          <span>Your nickname</span>
-          <span className="text-ink-300">
-            {nickname.length}/{NICKNAME_MAX}
-          </span>
-        </label>
-        <div className="mt-1 flex gap-2">
+      <form onSubmit={quickPlay}>
+        {signedInAs ? (
+          <p className="text-sm">
+            Playing as <strong className="break-all">{signedInAs}</strong>
+          </p>
+        ) : (
+          <label htmlFor="nickname" className="flex justify-between text-sm font-medium">
+            <span>Your nickname</span>
+            <span className="text-ink-300">
+              {nickname.length}/{NICKNAME_MAX}
+            </span>
+          </label>
+        )}
+        <div className={signedInAs ? 'hidden' : 'mt-1 flex gap-2'}>
           <input
             id="nickname"
             value={nickname}
@@ -116,22 +169,21 @@ export function RoomPanel() {
 
       <button
         type="button"
-        onClick={() => {
-          tryRoom();
-        }}
+        onClick={() => void createRoom()}
+        aria-disabled={busy}
         className="btn-game btn-ghost mt-2 w-full py-2"
       >
-        Create private game
+        {busy ? 'Opening…' : 'Create private game'}
       </button>
 
-      <form onSubmit={tryJoin} className="mt-2 flex gap-2">
+      <form onSubmit={joinRoom} className="mt-2 flex gap-2">
         <label htmlFor="room-code" className="sr-only">
           Room code
         </label>
         <input
           id="room-code"
           value={code}
-          maxLength={CODE_LENGTH}
+          maxLength={ROOM_CODE_LENGTH}
           autoComplete="off"
           placeholder="Room code"
           onChange={(event) => {

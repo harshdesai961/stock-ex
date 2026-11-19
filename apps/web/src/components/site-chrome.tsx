@@ -1,16 +1,7 @@
 import { LogIn, UserRound } from 'lucide-react';
 import Link from 'next/link';
-import { getSession } from '@/lib/session';
+import { signedInName } from '@/lib/session';
 import { LogoMark } from './board-art';
-
-/** The signed-in player's name, or undefined. A database hiccup shows "Log in" rather than an error page. */
-async function signedInName(): Promise<string | undefined> {
-  try {
-    return (await getSession())?.user.name;
-  } catch {
-    return undefined;
-  }
-}
 
 export async function SiteHeader() {
   const name = await signedInName();
